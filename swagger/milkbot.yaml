@@ -2,12 +2,29 @@ swagger: '2.0'
 
 # This is your document metadata
 info:
-  version: "0.0.0"
+  version: 1.2
   title: MilkBot(R) lactation API
-
-# Describe your paths here
+  description: access to MilkBot(R) fitting engine.
+  termsOfService: http://milkbot.com/terms/
+  contact:
+    name: MilkBot Support
+    url: http://milkbot.com/support
+    email: support@milkbot.com
+host: milkbot.com
+basePath: fitter
+schemes: [http, ws]
+consumes:
+  - application/json
+  - application/xml
+produces:
+  - application/json
+  - application/xml
+securityDefinitions:
+  api_key:
+    type: apiKey
+    name: api_key
+    in: header
 paths:
-  # This is a path endpoint. Change it.
   /fitLactation:
     get:
       description: Fit a lactation.
@@ -17,18 +34,38 @@ paths:
           description: a single lactation
           required: true
           lactation:
-            $ref: '#/definitions/Lactataion'
+            $ref: '#/definitions/Lactation'
       # Expected responses for this operation:
       responses:
         # Response code
         200:
-          description: Successful response
+          description: Lactation fitted
           schema:
             $ref: '#/definitions/MBParams'
- 
-          
+  /fitLactations:
+    post:
+      description: Fit an array of lactations.
+      parameters:
+        - name: lactations
+          in: body
+          required: true
+          type: array
+          items:
+            $ref: '#/definitions/Lactation'
+        - name: fitting_priors
+          in: body
+          required: false
+          description: default priors will be used if not supplied
+          type: 
+            $ref: '#/definitions/Lactation'
+     # Expected responses for this operation:
+      responses:
+        # Response code
+        200:
+          description: Lactations fitted
+          schema:
+            $ref: '#/definitions/fittingPriors'
 definitions:
-
   MBParams:
     description: MilkBot(R) parameter set.
     type: object
@@ -53,6 +90,16 @@ definitions:
         format: float
       base_unit:
         $ref: '#/definitions/BaseUnit'
+
+  fittingPriors:
+    description: Bayesian prior expectations used by fitting engine.
+    type: object
+    properties:
+      means:
+        $ref: '#/definitions/MBParams'
+      variance:
+        $ref: '#/definitions/MBParams'
+
         
   BaseUnit:
     description: Unit of measurement.
@@ -93,6 +140,11 @@ definitions:
         type: string
       name:
         type: string
+      breed:
+        type: string
+        description: breed of cow
+        default: "H"
+        enum: [H, J, BS, G, X]
       unit:
        $ref: '#/definitions/BaseUnit'
       parity:
