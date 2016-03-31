@@ -12,19 +12,19 @@ paths:
     get:
       description: Fit a lactation.
       parameters:
-        - name: id
+        - name: lactation
           in: path
-          description: ID number of drug
+          description: a single lactation
           required: true
-          type: integer
-          format: int64
+          lactation:
+            $ref: '#/definitions/Lactataion'
       # Expected responses for this operation:
       responses:
         # Response code
         200:
           description: Successful response
           schema:
-            $ref: '#/definitions/Drug'
+            $ref: '#/definitions/MBParams'
  
           
 definitions:
@@ -121,4 +121,3 @@ definitions:
       
 
     
-
