@@ -1,1 +1,124 @@
+swagger: '2.0'
+
+# This is your document metadata
+info:
+  version: "0.0.0"
+  title: MilkBot(R) lactation API
+
+# Describe your paths here
+paths:
+  # This is a path endpoint. Change it.
+  /fitLactation:
+    get:
+      description: Fit a lactation.
+      parameters:
+        - name: id
+          in: path
+          description: ID number of drug
+          required: true
+          type: integer
+          format: int64
+      # Expected responses for this operation:
+      responses:
+        # Response code
+        200:
+          description: Successful response
+          schema:
+            $ref: '#/definitions/Drug'
+ 
+          
+definitions:
+
+  MBParams:
+    description: MilkBot(R) parameter set.
+    type: object
+    properties:
+      scale:
+        type: number
+        format: float
+      ramp:
+        type: number
+        format: float
+      offset:
+        type: number
+        format: float
+      decay:
+        type: number
+        format: float
+      pt_ct:
+        type: number
+        format: integer
+      std_error:
+        type: number
+        format: float
+      base_unit:
+        $ref: '#/definitions/BaseUnit'
+        
+  BaseUnit:
+    description: Unit of measurement.
+    type: object
+    properties:
+    name:
+        type: string
+        description: abbreviated name of measurement unit
+        default: "kg"
+        enum: [lb, kg, l, g]
+
+  MilkPt:
+    description: Measured milk production data point.
+    type: object
+    properties:
+      dim:
+        description: Days since calving date
+        type: number
+        format: integer
+      milk:
+        type: number
+        format: float
+      baseUnit:
+        $ref: '#/definitions/BaseUnit'
+      dayfraction:
+        description: fraction of 24hr production this represents    
+        type: number
+        format: float
+        default: 1
+      required: [dim, milk]
+
+
+  Lactation:
+    description: A single lactation of any length.
+    type: object
+    properties:
+      ID:
+        type: string
+      name:
+        type: string
+      unit:
+       $ref: '#/definitions/BaseUnit'
+      parity:
+        description: parity of this lactation
+        type: number
+        format: integer
+        default: 3
+      points:
+        type: array
+        items: 
+          $ref: '#/definitions/MilkPt'
+    required: [points]
+    
+  LactationList:
+    description: A list of lactations.
+    type: object
+    properties:
+      unit:
+       $ref: '#/definitions/BaseUnit'
+      lactations:
+        type: array
+        items: 
+          $ref: '#/definitions/Lactation'
+      required: [lactations]
+      
+      
+
+    
 
