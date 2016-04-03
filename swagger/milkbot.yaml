@@ -3,7 +3,7 @@ swagger: '2.0'
 info:
   version: 1.2.0
   title: MilkBot(R) lactation API
-  description: access to MilkBot(R) fitting engine.
+  description: "This service uses the MilkBot(R) Bayesian fitting engine to fit the MilkBot(R) model to lactation data supplied as (DIM, milk weight) data points.  The returned parameter set can be substituted into the MilkBot(R) equation ((1 - E^((offset - t)/ramp)/2)*scale)/E^(decay*t) to generate predicted milk production at any time in the lactation, where t is time since calving (DIM, in days) and E is Euler's number. Simple formulas described at the support URL can    calculate persistence, M305, or cumulative milk between dates. The fitting process uses Bayesian priors describing expected means and variance of parameter values as well as expected mean and variance in fitting error. If priors are provided, they will be used. Otherwise default values based on breed and parity will be used"
   termsOfService: http://milkbot.com/terms/
   contact:
     name: MilkBot Support
@@ -29,6 +29,7 @@ paths:
   /fitLactation:
     get:
       summary: Fit a lactation.
+      description: "This endpoint fits a single lactation from the supplied (DIM, milk weight) data pairs using a default set of Bayesian priors based on breed and parity(if breed and parity are supplied)"
       parameters:
         - name:  lactation
           in: body
@@ -50,15 +51,14 @@ paths:
   /fitLactations:
     post:
       summary: Fit a list of lactations.
+      description: "This endpoint fits a group of lactations using  customized priors if they are supplied, or a default set of  priors based on breed and parity."
       parameters:
         - name:  lactations
           in: body
           required: true
           schema:
             $ref: '#/definitions/LactationList'
-    # Expected responses for this operation:
       responses:
-        # Response code
         200:
           description: Lactations fitted
           schema:
@@ -74,55 +74,66 @@ paths:
 
 definitions:
   MBParams:
-    description: MilkBot(R) parameter set.
+    description: "Parameter set for the MilkBot(R) model ((1 - E^((offset - t)/ramp)/2)*scale)/E^(decay*t) where t is time since calving (DIM, in days). and E is Euler's number"
+    required: [id_key, scale, ramp, decay]
     type: object
     properties:
+      id_key:
+        type: string
+        description: an identifier to key fitted parameters to a lactation  with the same id_key in the request. For this reason, id_key values should be unique within a LactationList.
       scale:
         type: number
         format: float
+        description: "Overall scale of milk production in units specified by base_unit. The MilkBot(R) model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor"
       ramp:
         type: number
         format: float
+        description: Length of ramp-up period at start of lactation, in days.
       offset:
         type: number
         format: float
+        default: 0
+        description: Offset between calving and theoretical start of lactation in days.
       decay:
         type: number
         format: float
+        description: first order decay constant in inverse-days that controls the decline in milk production. 
       pt_ct:
         type: number
         format: integer
+        description: number of data points used to calculate fitted parameters.
       std_error:
         type: number
         format: float
+        description: standard deviation of residuals between data points and fitted curve.
       base_unit:
         $ref: '#/definitions/BaseUnit'
 
   BaseUnit:
-    description: Unit of measurement.
+    description: "Unit of measurement used for scale and milk weights, defaulting to kg."
     type: object
+    required: [name]
     properties:
       name:
         type: string
-        description: abbreviated name of measurement unit
+        description: "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams"
         default: "kg"
         enum: [lb, kg, l, g]
 
   Lactation:
     description: A single lactation of any length.
+    required: [id_key, points]
     type: object
+    required: [id_key, points]
     properties:
-      ID:
+      id_key:
         type: string
-      name:
-        type: string
+        description: an identifier to key this lactation to a MBParams object with the same id_key in the response. For this reason, id_key values should be unique within a LactationList. 
       breed:
         type: string
         description: breed of cow
         default: "H"
         enum: [H, J, BS, G, X]
-      unit:
-       $ref: '#/definitions/BaseUnit'
       parity:
         description: parity of this lactation
         type: number
@@ -132,7 +143,8 @@ definitions:
         type: array
         items: 
           $ref: '#/definitions/MilkPt'
-    required: [points]
+      unit:
+       $ref: '#/definitions/BaseUnit'
     
   MilkPt:
     description: Measured milk production data point.
@@ -144,12 +156,13 @@ definitions:
         type: number
         format: integer
       milk:
+        description: quantity of milk produced in one day, or a fraction of a day if day_fraction is supplied. Milk is measured in units specified by base_unit, defaulting to kg.
         type: number
         format: float
       base_unit:
         $ref: '#/definitions/BaseUnit'
-      dayfraction:
-        description: fraction of 24hr production this represents    
+      day_fraction:
+        description: "fraction of one day's production that milk value represents, defaulting to 1.0"    
         type: number
         format: float
         default: 1.0
@@ -166,10 +179,10 @@ definitions:
       base_unit:
        $ref: '#/definitions/BaseUnit'
       priors:
-       $ref: '#/definitions/PopulationPriors'
+        $ref: '#/definitions/PopulationPriors'
           
   PopulationPriors:
-    description: Bayesian prior expectations used by fitting engine.
+    description: Optional Bayesian prior expectations for use by fitting engine. If not provided, defaults based on breed and parity will be used.
     type: object
     properties:
       means:
