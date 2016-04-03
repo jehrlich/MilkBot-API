@@ -1,8 +1,7 @@
+---
 swagger: '2.0'
-
-# This is your document metadata
 info:
-  version: 1.2
+  version: 1.2.0
   title: MilkBot(R) lactation API
   description: access to MilkBot(R) fitting engine.
   termsOfService: http://milkbot.com/terms/
@@ -11,60 +10,68 @@ info:
     url: http://milkbot.com/support
     email: support@milkbot.com
 host: milkbot.com
-basePath: fitter
-schemes: [http, ws]
+basePath: /fitter
+schemes: [http, https, ws, wss]
 consumes:
   - application/json
   - application/xml
 produces:
   - application/json
   - application/xml
+security:
+  - internalApiKey: []
 securityDefinitions:
-  api_key:
+  internalApiKey:
     type: apiKey
-    name: api_key
     in: header
+    name: api_key
 paths:
   /fitLactation:
     get:
-      description: Fit a lactation.
+      summary: Fit a lactation.
       parameters:
-        - name: lactation
-          in: path
+        - name:  lactation
+          in: body
           description: a single lactation
           required: true
-          lactation:
+          schema:
             $ref: '#/definitions/Lactation'
-      # Expected responses for this operation:
       responses:
-        # Response code
         200:
           description: Lactation fitted
           schema:
             $ref: '#/definitions/MBParams'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+
   /fitLactations:
     post:
-      description: Fit an array of lactations.
+      summary: Fit a list of lactations.
       parameters:
-        - name: lactations
+        - name:  lactations
           in: body
           required: true
-          type: array
-          items:
-            $ref: '#/definitions/Lactation'
-        - name: fitting_priors
-          in: body
-          required: false
-          description: default priors will be used if not supplied
-          type: 
-            $ref: '#/definitions/Lactation'
-     # Expected responses for this operation:
+          schema:
+            $ref: '#/definitions/LactationList'
+    # Expected responses for this operation:
       responses:
         # Response code
         200:
           description: Lactations fitted
           schema:
-            $ref: '#/definitions/fittingPriors'
+           type: array
+           items: 
+              $ref: '#/definitions/MBParams'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+
+
+
 definitions:
   MBParams:
     description: MilkBot(R) parameter set.
@@ -91,46 +98,15 @@ definitions:
       base_unit:
         $ref: '#/definitions/BaseUnit'
 
-  fittingPriors:
-    description: Bayesian prior expectations used by fitting engine.
-    type: object
-    properties:
-      means:
-        $ref: '#/definitions/MBParams'
-      variance:
-        $ref: '#/definitions/MBParams'
-
-        
   BaseUnit:
     description: Unit of measurement.
     type: object
     properties:
-    name:
+      name:
         type: string
         description: abbreviated name of measurement unit
         default: "kg"
         enum: [lb, kg, l, g]
-
-  MilkPt:
-    description: Measured milk production data point.
-    type: object
-    properties:
-      dim:
-        description: Days since calving date
-        type: number
-        format: integer
-      milk:
-        type: number
-        format: float
-      baseUnit:
-        $ref: '#/definitions/BaseUnit'
-      dayfraction:
-        description: fraction of 24hr production this represents    
-        type: number
-        format: float
-        default: 1
-      required: [dim, milk]
-
 
   Lactation:
     description: A single lactation of any length.
@@ -158,18 +134,59 @@ definitions:
           $ref: '#/definitions/MilkPt'
     required: [points]
     
+  MilkPt:
+    description: Measured milk production data point.
+    type: object
+    required: [dim, milk]
+    properties:
+      dim:
+        description: Days since calving date
+        type: number
+        format: integer
+      milk:
+        type: number
+        format: float
+      base_unit:
+        $ref: '#/definitions/BaseUnit'
+      dayfraction:
+        description: fraction of 24hr production this represents    
+        type: number
+        format: float
+        default: 1.0
+        
   LactationList:
     description: A list of lactations.
     type: object
+    required: [lactations]
     properties:
-      unit:
-       $ref: '#/definitions/BaseUnit'
       lactations:
         type: array
         items: 
           $ref: '#/definitions/Lactation'
-      required: [lactations]
-      
-      
+      base_unit:
+       $ref: '#/definitions/BaseUnit'
+      priors:
+       $ref: '#/definitions/PopulationPriors'
+          
+  PopulationPriors:
+    description: Bayesian prior expectations used by fitting engine.
+    type: object
+    properties:
+      means:
+        $ref: '#/definitions/MBParams'
+      variance:
+        $ref: '#/definitions/MBParams'
+  
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      fields:
+        type: string
 
-    
+
+
