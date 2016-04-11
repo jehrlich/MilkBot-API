@@ -3,7 +3,7 @@ swagger: '2.0'
 info:
   version: 1.2.0
   title: MilkBot(R) lactation API
-  description: "This service uses the MilkBot(R) Bayesian fitting engine to fit the MilkBot(R) model to lactation data supplied as (DIM, milk weight) data points.  The returned parameter set can be substituted into the MilkBot(R) equation ((1 - E^((offset - t)/ramp)/2)*scale)/E^(decay*t) to generate predicted milk production at any time in the lactation, where t is time since calving (DIM, in days) and E is Euler's number. Simple formulas described at the support URL can    calculate persistence, M305, or cumulative milk between dates. The fitting process uses Bayesian priors describing expected means and variance of parameter values as well as expected mean and variance in fitting error. If priors are provided, they will be used. Otherwise default values based on breed and parity will be used"
+  description: "This service uses the MilkBot(R) Bayesian fitting engine to fit the MilkBot(R) model to lactation data supplied as (DIM, milk weight) data points.  The returned parameter set can be substituted into the MilkBot(R) equation<br><br> ((1 - E^((offset - t)/ramp)/2)*scale)/E^(decay X t) <br><br>to generate predicted milk production at any time in the lactation, where t is time since calving (DIM, in days) and E is Euler's number.<br><br> Simple formulas described at the support URL can    calculate persistence, M305, or cumulative milk between dates. The fitting process uses Bayesian priors describing expected means and variance of parameter values as well as expected mean and variance in fitting error. If priors are provided, they will be used. Otherwise default values based on breed and parity will be used"
   termsOfService: http://milkbot.com/terms/
   contact:
     name: MilkBot Support
@@ -46,6 +46,8 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - internalApiKey: []
 
 
   /fitLactations:
@@ -69,6 +71,8 @@ paths:
           description: Unexpected error
           schema:
             $ref: '#/definitions/Error'
+      security:
+        - internalApiKey: []
 
 
 
