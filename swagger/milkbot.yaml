@@ -2,14 +2,14 @@
 swagger: '2.0'
 info:
   version: 1.2.0
-  title: MilkBot(R) lactation API
-  description: "This service uses the MilkBot(R) Bayesian fitting engine to fit the MilkBot(R) model to lactation data supplied as (DIM, milk weight) data points.  The returned parameter set can be substituted into the MilkBot(R) equation<br><br> ((1 - E^((offset - t)/ramp)/2)*scale)/E^(decay X t) <br><br>to generate predicted milk production at any time in the lactation, where t is time since calving (DIM, in days) and E is Euler's number.<br><br> Simple formulas described at the support URL can    calculate persistence, M305, or cumulative milk between dates. The fitting process uses Bayesian priors describing expected means and variance of parameter values as well as expected mean and variance in fitting error. If priors are provided, they will be used. Otherwise default values based on breed and parity will be used"
-  termsOfService: http://milkbot.com/terms/
+  title: MilkBot lactation API
+  description: "This service uses the MilkBot&reg; fitting engine to fit the MilkBot&reg; model to lactation data supplied as (DIM, milk weight) data points.  The returned parameter set can be substituted into the MilkBot&reg; equation<br><br> ((1 - E^((offset - t)/ramp)/2)*scale)/E^(decay X t) <br><br>to generate predicted milk production at any time in the lactation, where t is time since calving (in days, DIM=0 at calving) and E is Euler's number.<br><br> Simple formulas described at the support URL can calculate persistence, M305, or cumulative milk between dates. The fitting process uses Bayesian priors describing expected means and variance of parameter values as well as expected mean and variance in fitting error. If priors are provided, they will be used. Otherwise default values based on breed and parity will be used"
+  termsOfService: http://MilkBot.com/terms/
   contact:
     name: MilkBot Support
-    url: http://milkbot.com/support
-    email: support@milkbot.com
-host: milkbot.com
+    url: http://MilkBot.com/support
+    email: support@MilkBot.com
+host: MilkBot.com
 basePath: /fitter
 schemes: [http, https, ws, wss]
 consumes:
@@ -29,7 +29,7 @@ paths:
   /fitLactation:
     get:
       summary: Fit a lactation.
-      description: "This endpoint fits a single lactation from the supplied (DIM, milk weight) data pairs using a default set of Bayesian priors based on breed and parity(if breed and parity are supplied)"
+      description: "This endpoint fits a single lactation from the supplied (DIM, milk weight) data pairs using a default set of Bayesian priors based on breed and parity"
       parameters:
         - name:  lactation
           in: body
@@ -78,7 +78,7 @@ paths:
 
 definitions:
   MBParams:
-    description: "Parameter set for the MilkBot(R) model ((1 - E^((offset - t)/ramp)/2)*scale)/E^(decay*t) where t is time since calving (DIM, in days). and E is Euler's number"
+    description: "Parameter set for the MilkBot&reg; model"
     required: [id_key, scale, ramp, decay]
     type: object
     properties:
@@ -88,7 +88,7 @@ definitions:
       scale:
         type: number
         format: float
-        description: "Overall scale of milk production in units specified by base_unit. The MilkBot(R) model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor"
+        description: "Overall scale of milk production in units specified by milk_unit. The MilkBot&reg; model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor"
       ramp:
         type: number
         format: float
@@ -110,10 +110,10 @@ definitions:
         type: number
         format: float
         description: standard deviation of residuals between data points and fitted curve.
-      base_unit:
-        $ref: '#/definitions/BaseUnit'
+      milk_unit:
+        $ref: '#/definitions/MilkUnit'
 
-  BaseUnit:
+  MilkUnit:
     description: "Unit of measurement used for scale and milk weights, defaulting to kg."
     type: object
     required: [name]
@@ -128,7 +128,6 @@ definitions:
     description: A single lactation of any length.
     required: [id_key, points]
     type: object
-    required: [id_key, points]
     properties:
       id_key:
         type: string
@@ -148,7 +147,7 @@ definitions:
         items: 
           $ref: '#/definitions/MilkPt'
       unit:
-       $ref: '#/definitions/BaseUnit'
+       $ref: '#/definitions/MilkUnit'
     
   MilkPt:
     description: Measured milk production data point.
@@ -160,11 +159,11 @@ definitions:
         type: number
         format: integer
       milk:
-        description: quantity of milk produced in one day, or a fraction of a day if day_fraction is supplied. Milk is measured in units specified by base_unit, defaulting to kg.
+        description: quantity of milk produced in one day, or a fraction of a day if day_fraction is supplied. Milk is measured in units specified by milk_unit, defaulting to kg.
         type: number
         format: float
-      base_unit:
-        $ref: '#/definitions/BaseUnit'
+      milk_unit:
+        $ref: '#/definitions/MilkUnit'
       day_fraction:
         description: "fraction of one day's production that milk value represents, defaulting to 1.0"    
         type: number
@@ -176,12 +175,15 @@ definitions:
     type: object
     required: [lactations]
     properties:
+      name:
+        type: string
+        description: "name for this group of lactations"
       lactations:
         type: array
         items: 
           $ref: '#/definitions/Lactation'
-      base_unit:
-       $ref: '#/definitions/BaseUnit'
+      milk_unit:
+       $ref: '#/definitions/MilkUnit'
       priors:
         $ref: '#/definitions/PopulationPriors'
           
