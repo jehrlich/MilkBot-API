@@ -62,11 +62,9 @@ paths:
             $ref: '#/definitions/LactationList'
       responses:
         200:
-          description: Lactations fitted
+          description: MBParams List for fitted lactations
           schema:
-           type: array
-           items: 
-              $ref: '#/definitions/MBParams'
+            $ref: '#/definitions/MBParamsList'
         default:
           description: Unexpected error
           schema:
@@ -186,7 +184,23 @@ definitions:
        $ref: '#/definitions/MilkUnit'
       priors:
         $ref: '#/definitions/PopulationPriors'
+    
           
+  MBParamsList:
+    description: A list of MBParams.
+    type: object
+    required: [mbparams]
+    properties:
+      name:
+        type: string
+        description: "name for this group of lactations"
+      mbparams:
+        type: array
+        items: 
+          $ref: '#/definitions/MBParams'
+      milk_unit:
+       $ref: '#/definitions/MilkUnit'
+
   PopulationPriors:
     description: Optional Bayesian prior expectations for use by fitting engine. If not provided, defaults based on breed and parity will be used.
     type: object
