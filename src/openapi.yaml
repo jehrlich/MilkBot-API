@@ -17,24 +17,20 @@ info:
     name: Jim Ehrlich, DVM
     email: jehrlich@MilkBot.com
   version: 1.2.0
-servers:
 
-security:
-  - internalApiKey: []
+
+
 paths:
   /fitLactation:
     get:
-      summary: Fit a lactation.
-      description: This endpoint fits a single lactation from the supplied (DIM, milk
+      operationId: fitSingle
+      description: Fit a single lactation from the supplied (DIM, milk
         weight) data pairs using a default set of Bayesian priors based on breed and
         parity
       requestBody:
         description: a single lactation
         content:
           application/json:
-            schema:
-              $ref: '#/components/schemas/Lactation'
-          application/xml:
             schema:
               $ref: '#/components/schemas/Lactation'
         required: true
@@ -45,9 +41,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MBParams'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/MBParams'
         default:
           description: Unexpected error
           content:
@@ -57,9 +50,7 @@ paths:
             application/xml:
               schema:
                 $ref: '#/components/schemas/Error'
-      security:
-        - internalApiKey: []
-      x-codegen-request-body-name: lactation
+
   /fitLactations:
     post:
       summary: Fit a list of lactations.
@@ -70,9 +61,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/LactationList'
-          application/xml:
-            schema:
-              $ref: '#/components/schemas/LactationList'
         required: true
       responses:
         200:
@@ -81,21 +69,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MBParamsList'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/MBParamsList'
         default:
           description: Unexpected error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - internalApiKey: []
-      x-codegen-request-body-name: lactations
 components:
   schemas:
     MBParams:
