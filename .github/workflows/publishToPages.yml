@@ -1,0 +1,29 @@
+name: Generate docs and publish to GH Pages
+on:
+  push: #generate docs when changes are pushed to default branch for the file src/openAPI.yml
+    branches:
+      - master
+    paths:
+      - "src/openapi.yml"
+
+jobs:
+
+  serve:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: redoc-cli bundle
+        uses: seeebiii/redoc-cli-github-action@v10
+        with:
+          args: 'bundle src/openapi.yaml -o docs/index.html '  
+
+      - name: Deploy
+        if: success()
+        uses: JamesIves/github-pages-deploy-action@4.1.5
+        with:
+          branch: gh-pages
+          folder: docs       
+
