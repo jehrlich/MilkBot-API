@@ -1,0 +1,26 @@
+required:
+  - dim
+  - milk
+type: object
+properties:
+  dim:
+    type: number
+    description: Days since calving date
+    format: integer
+  milk:
+    type: number
+    description: >-
+      quantity of milk produced in one day, or a fraction of a day if
+      day_fraction is supplied. Milk is measured in units specified by
+      milk_unit, defaulting to kg.
+    format: float
+  milk_unit:
+    $ref: ./MilkUnit.yaml
+  day_fraction:
+    type: number
+    description: >-
+      fraction of one day's production that milk value represents, defaulting to
+      1.0
+    format: float
+    default: 1
+description: Measured milk production data point.

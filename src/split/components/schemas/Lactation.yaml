@@ -1,0 +1,32 @@
+required:
+  - id_key
+  - points
+type: object
+properties:
+  id_key:
+    type: string
+    description: >-
+      an identifier to key this lactation to a MBParams object with the same
+      id_key in the response. For this reason, id_key values should be unique
+      within a LactationList.
+  breed:
+    type: string
+    description: breed of cow
+    default: H
+    enum:
+      - H
+      - J
+      - BS
+      - G
+      - X
+  parity:
+    type: number
+    description: parity of this lactation
+    format: integer
+  points:
+    type: array
+    items:
+      $ref: ./MilkPt.yaml
+  unit:
+    $ref: ./MilkUnit.yaml
+description: A single lactation of any length.

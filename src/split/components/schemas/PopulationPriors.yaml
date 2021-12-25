@@ -1,0 +1,9 @@
+type: object
+properties:
+  means:
+    $ref: ./MBParams.yaml
+  variance:
+    $ref: ./MBParams.yaml
+description: >-
+  Optional Bayesian prior expectations for use by fitting engine. If not
+  provided, defaults based on breed and parity will be used.

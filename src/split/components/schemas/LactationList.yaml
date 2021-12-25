@@ -1,0 +1,16 @@
+required:
+  - lactations
+type: object
+properties:
+  name:
+    type: string
+    description: name for this group of lactations
+  lactations:
+    type: array
+    items:
+      $ref: ./Lactation.yaml
+  milk_unit:
+    $ref: ./MilkUnit.yaml
+  priors:
+    $ref: ./PopulationPriors.yaml
+description: A list of lactations.
