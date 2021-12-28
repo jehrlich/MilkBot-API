@@ -1,5 +1,6 @@
 name: Generate docs and publish to GH Pages
 on:
+  workflow_dispatch:
   push: #generate docs when changes are pushed to default branch for the file src/openAPI.yml
     branches:
       - master
