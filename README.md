@@ -8,6 +8,7 @@ values are can be interpreted as observable features of the lactation as a whole
 - **_ramp_**, governs the rate of the rise in early lactation
 - **_decay_** is the rate of exponential decline, most apparent in late lactation
 - **_offset_** is a small (usually insignificant) correction for time between calving and the theoretical start of lactation
+- **_t_** is time since calving in days (DIM)
 
 An open-access paper in **_PeerJ_** provides a good introduction to the model. 
 [Quantifying inter-group variability in lactation curve shape and magnitude with the MilkBot® lactation model](https://peerj.com/articles/54/)
