@@ -135,7 +135,8 @@ components:
       properties:
         id:
           type: string
-          description: an identifier to key this lactation to a MBParams object with
+          description: >-
+            an identifier to key this lactation to a MBParams object with
             the same id_key in the response. For this reason, id_key values should
             be unique within a LactationList.
         breed:
@@ -167,7 +168,8 @@ components:
           format: integer
         milk:
           type: number
-          description: quantity of milk produced in one day, or a fraction of a day
+          description: >-
+            quantity of milk produced in one day, or a fraction of a day
             if day_fraction is supplied. Milk is measured in units specified by milk_unit,
             defaulting to kg.
           format: float
@@ -179,7 +181,8 @@ components:
 
 
     Config:
-      description: configuration used by the fitting engine during fitting and for specifying format
+      description: >-
+      configuration used by the fitting engine during fitting and for specifying format
       of returned data. The Bayesian priors required by the fitting engine will be the _defaultPriors_
       unless one of the items in _typedPriors_ matches values in a lactation in whichever optional fields
       (breed, parity, herd) are supplied by both a _typedPrior_ and a _Lactation_.
