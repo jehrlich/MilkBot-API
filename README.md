@@ -2,6 +2,8 @@
 The MilkBot lactation model is a nonlinear lactation model describing daily milk production 
 as a function of time(days) since calving (DIM). It is parameterized so that fitted parameter
 values are can be interpreted as observable features of the lactation as a whole.  
+<img src="https://github.com/jehrlich/MilkBot-API/blob/master/assets/equation.svg" width="450">
+
 - **_scale_**, the overall level of milk production
 - **_ramp_**, governs the rate of the rise in early lactation
 - **_decay_** is the rate of exponential decline, most apparent in late lactation
