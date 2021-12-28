@@ -182,10 +182,10 @@ components:
 
     Config:
       description: >-
-      configuration used by the fitting engine during fitting and for specifying format
-      of returned data. The Bayesian priors required by the fitting engine will be the _defaultPriors_
-      unless one of the items in _typedPriors_ matches values in a lactation in whichever optional fields
-      (breed, parity, herd) are supplied by both a _typedPrior_ and a _Lactation_.
+        configuration used by the fitting engine during fitting and for specifying format
+        of returned data. The Bayesian priors required by the fitting engine will be the _defaultPriors_
+        unless one of the items in _typedPriors_ matches values in a lactation in whichever optional fields
+        (breed, parity, herd) are supplied by both a _typedPrior_ and a _Lactation_.
       type: object
       properties:
         name:
