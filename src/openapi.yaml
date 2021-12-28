@@ -4,10 +4,8 @@ info:
   description: This service uses the MilkBot&reg; fitting engine to fit the MilkBot&reg;
     model to lactation data supplied as (DIM, milk weight) data points.  The returned
     parameter set can be substituted into the MilkBot&reg;
-    <img src="https://github.com/jehrlich/MilkBot-API/blob/master/assets/equation.svg" width="450">
-
-    equation<br><br> ((1 -
-    E^((offset - t)/ramp)/2)*scale)/E^(decay X t) <br><br>to generate predicted milk
+    <img src="https://raw.githubusercontent.com/jehrlich/MilkBot-API/master/assets/equation.svg" width="450">
+    to generate predicted milk
     production at any time in the lactation, where t is time since calving (in days,
     DIM=0 at calving) and E is Euler's number.<br><br> Simple formulas described at
     the support URL can calculate persistence, M305, or cumulative milk between dates.
