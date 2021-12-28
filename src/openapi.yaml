@@ -47,7 +47,7 @@ paths:
                   lactations:
                     type: array
                     items:
-                      $ref: '#/components/schemas/FittedLactation'
+                      $ref: '#/components/schemas/Fit'
                   config:
                     $ref: '#/components/schemas/Summary'
         '400':
