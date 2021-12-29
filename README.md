@@ -18,7 +18,7 @@ Because it is a nonlinear model, fitting is not straightforward. We have develop
 fitting engine that estimates fitted parameter values from a set of expected values (the priors) 
 and any number of data points.
 
-This API describes the API for a planned public service for access to that fitting process.
+This [API](http://jehrlich.github.io/MilkBot-API/) describes the API for a planned public service for access to that fitting process.
 
 ## current status
 This API is under development and open for comment and suggestions. When some consensus
