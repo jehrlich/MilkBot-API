@@ -2,11 +2,12 @@ name: bundle OAS
 
 on:
   workflow_dispatch: #manual trigger or ...
-  push: #when changes are pushed to default branch for any file in src/split
+  push: #when changes are pushed to default branch for any .yaml in  src/split including subdirectories
     branches:
-      - master
+      - develop
     paths:
-      - rc/split/**.yaml
+      - src/split/**/*.yaml
+
 jobs:
 
   rebundle:
