@@ -44,6 +44,8 @@ jobs:
         with:
           branch: gh-pages
           folder: docs
+          target-folder: api
+          clean: false
 
 #      - name: Notify slack success
 #        if: success()
