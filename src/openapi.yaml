@@ -1,149 +1,153 @@
 openapi: 3.0.1
 info:
   title: MilkBot lactation API
-  description: This service uses the MilkBot&reg; fitting engine to fit the MilkBot&reg;
-    model to lactation data supplied as (DIM, milk weight) data points.  The returned
-    parameter set can be substituted into the MilkBot&reg; equation
-    <img src="https://raw.githubusercontent.com/jehrlich/MilkBot-API/master/assets/equation.svg" width="450">
-    <br> to generate predicted milk
-    production at any time in the lactation, where t is time since calving (in days,
-    DIM=0 at calving) and E is Euler's number.<br><br> Simple formulas described at
-    the support URL can calculate persistence, M305, or cumulative milk between dates.
-    The fitting process uses Bayesian priors describing expected means and variance
-    of parameter values as well as expected mean and variance in fitting error. If
-    priors are provided, they will be used. Otherwise default values based on breed
-    and parity will be used
+  description: >-
+    This service uses the MilkBot&reg; fitting engine to fit the MilkBot&reg;
+    model to lactation data supplied as (DIM, milk weight) data points.  The
+    returned parameter set can be substituted into the MilkBot&reg;
+    equation<br><br> ((1 - E^((offset - t)/ramp)/2)*scale)/E^(decay X t)
+    <br><br>to generate predicted milk production at any time in the lactation,
+    where t is time since calving (in days, DIM=0 at calving) and E is Euler's
+    number.<br><br> Simple formulas described at the support URL can calculate
+    persistence, M305, or cumulative milk between dates. The fitting process
+    uses Bayesian priors describing expected means and variance of parameter
+    values as well as expected mean and variance in fitting error. If priors are
+    provided, they will be used. Otherwise default values based on breed and
+    parity will be used
   termsOfService: http://MilkBot.com/terms/
   contact:
     name: Jim Ehrlich, DVM
     email: jehrlich@MilkBot.com
   version: 1.2.0
-
 paths:
-  /fit/lactations:
-    post:
-      summary: Fit an array of lactations.
-      description: Fit a group of lactations returning fitted lactations.
+  /fitLactation:
+    get:
+      operationId: fitSingle
+      description: >-
+        Fit a single lactation from the supplied (DIM, milk weight) data pairs
+        using a default set of Bayesian priors based on breed and parity
       requestBody:
-        required: true
+        description: a single lactation
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                lactations:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/Lactation'
-                config:
-                  $ref: '#/components/schemas/Config'
+              $ref: '#/components/schemas/Lactation'
+        required: true
       responses:
-        200:
+        '200':
+          description: Lactation fitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Params'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /fitLactations:
+    post:
+      summary: Fit a list of lactations.
+      description: >-
+        This endpoint fits a group of lactations using  customized priors if
+        they are supplied, or a default set of  priors based on breed and
+        parity.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LactationSet'
+        required: true
+      responses:
+        '200':
           description: MBParams List for fitted lactations
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  lactations:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Fit'
-                  config:
-                    $ref: '#/components/schemas/Summary'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
+                $ref: '#/components/schemas/PopulationPriors'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
+  securitySchemes:
+    internalApiKey:
+      type: apiKey
+      name: api_key
+      in: header
   schemas:
-    Params:
-      description: parameter values to define an individual lactation curve
-      required:
-        - decay
-        - ramp
-        - scale
-      type: object
-      properties:
-        scale:
-          type: number
-          description: Overall scale of milk production in units specified by milk_unit.
-            The MilkBot&reg; model can be converted to another unit of measurement
-            for milk simply by multiplying the scale parameter by an appropriate conversion
-            factor
-          format: float
-        ramp:
-          type: number
-          description: Length of ramp-up period at start of lactation, in days.
-          format: float
-        offset:
-          type: number
-          description: Offset between calving and theoretical start of lactation in
-            days.
-          format: float
-          default: 0.0
-        decay:
-          type: number
-          description: first order decay constant in inverse-days that controls the
-            decline in milk production.
-          format: float
-        milkUnit:
-          $ref: '#/components/schemas/MilkUnit'
-    Fit:
-      description: the result of fitting a set of data points to the MilkBot model
-      required:
-        - params
-      type: object
-      properties:
-        params:
-          $ref: '#/components/schemas/Params'
-        pts:
-          type: number
-          description: number of data points used to calculate fitted parameters.
-          format: integer
-        sError:
-          type: number
-          description: standard deviation of residuals between data points and fitted
-            curve.
-          format: float
-        milkUnit:
-          $ref: '#/components/schemas/MilkUnit'
     MilkUnit:
-      description: >-
-        unit of weight or volume by which milk is measured, used for _MilkPts.milk_ and
-        _Params.scale_. MilkUnit can be set at multiple levels. The most-specific is used,
-        and if not specified at any level, kilograms is the default. For example If the _Config_
-        sets _milkUnit_ to grams and _milkUnit_ is not specified at the _Lactation or MilkPt level, then
-        the unit is assumed to be grams everywhere.
       required:
-        - unit
+        - name
       type: object
       properties:
-        unit:
+        name:
           type: string
           description: >-
             abbreviated name of measurement unit lb=pounds, kg=kilograms,
             l=liters, g=grams
           default: kg
-
-    Lactation:
-      description: data related to a single lactation by a single animal
+          enum:
+            - lb
+            - kg
+            - l
+            - g
+      description: Unit of measurement used for scale and milk weights, defaulting to kg.
+    MilkPt:
       required:
-        - points
-        - units
+        - dim
+        - milk
       type: object
       properties:
-        id:
+        dim:
+          type: number
+          format: integer
+          description: Days since calving date
+        milk:
+          type: number
+          format: float
+          description: >-
+            quantity of milk produced in one day, or a fraction of a day if
+            day_fraction is supplied. Milk is measured in units specified by
+            milk_unit, defaulting to kg.
+        milk_unit:
+          $ref: '#/components/schemas/MilkUnit'
+        day_fraction:
+          type: number
+          format: float
+          default: 1
+          description: >-
+            fraction of one day's production that **_milk_** represents,
+            defaulting to 1.0
+      description: Measured milk production data point.
+    Lactation:
+      required:
+        - id_key
+        - points
+      type: object
+      properties:
+        id_key:
           type: string
           description: >-
-            an identifier to key this lactation to a MBParams object with
-            the same id_key in the response. For this reason, id_key values should
+            an identifier to key this lactation to a MBParams object with the
+            same id_key in the response. For this reason, id_key values should
             be unique within a LactationList.
         breed:
           type: string
           description: breed of cow
           default: H
+          enum:
+            - H
+            - J
+            - BS
+            - G
+            - X
         parity:
           type: number
           description: parity of this lactation
@@ -152,134 +156,94 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MilkPt'
-        units:
+        unit:
           $ref: '#/components/schemas/MilkUnit'
-        fit:
-          $ref: '#/components/schemas/Fit'
-    MilkPt:
-      description: Measured milk production data point.
-      required:
-        - dim
-        - milk
+      description: A single lactation of any length.
+    Error:
       type: object
       properties:
-        dim:
-          type: number
-          description: Days since calving date
-          format: integer
-        milk:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+        fields:
+          type: string
+    Params:
+      required:
+        - decay
+        - id_key
+        - ramp
+        - scale
+      type: object
+      properties:
+        id_key:
+          type: string
+          description: >-
+            an identifier to key fitted parameters to a lactation  with the same
+            id_key in the request. For this reason, id_key values should be
+            unique within a LactationList.
+        scale:
           type: number
           description: >-
-            quantity of milk produced in one day, or a fraction of a day
-            if day_fraction is supplied. Milk is measured in units specified by milk_unit,
-            defaulting to kg.
+            Overall scale of milk production in units specified by milk_unit.
+            The MilkBot&reg; model can be converted to another unit of
+            measurement for milk simply by multiplying the scale parameter by an
+            appropriate conversion factor
           format: float
-        hours:
+        ramp:
           type: number
-          description: number of hours to produce milk quantity
+          description: Length of ramp-up period at start of lactation, in days.
           format: float
-          default: 24.0
-
-
-    Config:
-      description: >-
-        configuration used by the fitting engine during fitting and for specifying format
-        of returned data. The Bayesian priors required by the fitting engine will be the _defaultPriors_
-        unless one of the items in _typedPriors_ matches values in a lactation in whichever optional fields
-        (breed, parity, herd) are supplied by both a _typedPrior_ and a _Lactation_.
-      type: object
-      properties:
-        name:
-          type: string
-          description: your name for this configuration
-        milkUnit:
+        offset:
+          type: number
+          description: Offset between calving and theoretical start of lactation in days.
+          format: float
+          default: 0
+        decay:
+          type: number
+          description: >-
+            first order decay constant in inverse-days that controls the decline
+            in milk production.
+          format: float
+        milk_unit:
           $ref: '#/components/schemas/MilkUnit'
-        defaultPriors:
-          $ref: '#/components/schemas/Summary'
-        typedPriors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Summary'
-        stepWiseFit:
-          type: boolean
-          default: false
-        keyToId:
-          type: boolean
-          default: true
-    Summary:
-      description: describes a set of lactations in terms of mean and standard deviation of parameter values
-      required:
-        - means
-        - sd
+      description: Parameter set for the MilkBot&reg; model
+    PopulationPriors:
       type: object
       properties:
         means:
           $ref: '#/components/schemas/Params'
         sd:
           $ref: '#/components/schemas/Params'
-        n:
+        seMilk:
           type: number
+          format: float
+        milk_unit:
+          $ref: '#/components/schemas/MilkUnit'
+      description: >-
+        Optional Bayesian prior expectations for use by fitting engine. If not
+        provided, defaults based on breed and parity will be used. **_means_**
+        are expected mean parameter values for the population **_sd_** are
+        expected standard deviation of parameter values for the population
+        **_seMilk_** is expected standard error of milk measurements excluding
+        the effects of a normal lactation curve
+    LactationSet:
+      required:
+        - lactations
+      type: object
+      properties:
         name:
           type: string
-        id:
-          type: string
-        breed:
-          type: string
-        parity:
-          type: integer
-        herd:
-          type: string
-
-    Error:
-      type: object
-      description: error response per RFC 7807
-      required:
-        - title
-        - status
-      properties:
-        errorType:
-          type: string
-          description: a URI identifier that categorizes the error
-          example: /errors/incorrect-user-pass
-        title:
-          type: string
-          description: A brief, human-readable message about the error
-          example: incorrect username or password
-        status:
-          type: integer
-          description: HTTP status code
-          example: 400
-        detail:
-          type: string
-          description: a human-readable description of the specific error
-          example: Authentication failed due to incorrect username or password.
-        instance:
-          type: string
-          description: a URI that identifies the specific occurrence of the error
-          example: /login/log/abc123
-  securitySchemes:
-    internalApiKey:
-      type: apiKey
-      name: apikey
-      in: header
-  responses:
-    NoContent:
-      description: There is no content to send for this request,.
-    BadRequest:
-      description: The server could not understand the request due to invalid syntax.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: The client must authenticate itself to get the requested response.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: The client does not have access rights to the content.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+          description: name for this group of lactations
+        lactations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lactation'
+        milk_unit:
+          $ref: '#/components/schemas/MilkUnit'
+        priors:
+          type: array
+          items:
+            $ref: '#/components/schemas/PopulationPriors'
+      description: A list of lactations.
