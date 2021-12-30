@@ -247,4 +247,3 @@ components:
           items:
             $ref: '#/components/schemas/PopulationPriors'
       description: A list of lactations.
-
