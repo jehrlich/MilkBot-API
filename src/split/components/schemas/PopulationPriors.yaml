@@ -1,9 +1,18 @@
 type: object
 properties:
   means:
-    $ref: ./MBParams.yaml
-  variance:
-    $ref: ./MBParams.yaml
+    $ref: ./Params.yaml
+  sd:
+    $ref: ./Params.yaml
+  seMilk:
+    type: number
+    format: float
+  milk_unit:
+    $ref: ./MilkUnit.yaml
 description: >-
   Optional Bayesian prior expectations for use by fitting engine. If not
   provided, defaults based on breed and parity will be used.
+  **_means_** are expected mean parameter values for the population
+  **_sd_** are expected standard deviation of parameter values for the population
+  **_seMilk_** is expected standard error of milk measurements excluding the
+  effects of a normal lactation curve

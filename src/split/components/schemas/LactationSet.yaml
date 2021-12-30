@@ -12,5 +12,7 @@ properties:
   milk_unit:
     $ref: ./MilkUnit.yaml
   priors:
-    $ref: ./PopulationPriors.yaml
+    type: array
+    items:
+      $ref: ./PopulationPriors.yaml
 description: A list of lactations.

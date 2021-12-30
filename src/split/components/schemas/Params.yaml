@@ -34,14 +34,6 @@ properties:
       first order decay constant in inverse-days that controls the decline in
       milk production.
     format: float
-  pt_ct:
-    type: number
-    description: number of data points used to calculate fitted parameters.
-    format: integer
-  std_error:
-    type: number
-    description: standard deviation of residuals between data points and fitted curve.
-    format: float
   milk_unit:
     $ref: ./MilkUnit.yaml
 description: Parameter set for the MilkBot&reg; model
