@@ -7,7 +7,7 @@ post:
     content:
       application/json:
         schema:
-          $ref: ../components/schemas/LactationList.yaml
+          $ref: ../components/schemas/LactationSet.yaml
     required: true
   responses:
     '200':
@@ -15,7 +15,7 @@ post:
       content:
         application/json:
           schema:
-            $ref: ../components/schemas/MBParamsList.yaml
+            $ref: ../components/schemas/PopulationPriors.yaml
     default:
       description: Unexpected error
       content:
