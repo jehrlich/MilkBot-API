@@ -36,7 +36,7 @@ jobs:
       - name: create docs from OAS
         uses: seeebiii/redoc-cli-github-action@v10
         with:
-          args: 'bundle src/openapi.yaml -o docs/index.html '
+          args: 'bundle src/openapi.yaml -o docs/api.html '
 
       - name: Publish to GH-pages
         if: success()
