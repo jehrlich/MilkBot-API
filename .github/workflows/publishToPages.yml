@@ -27,14 +27,16 @@ jobs:
 #
       - name: split OAS
         run: npx @redocly/openapi-cli split src/openapi.yaml --outDir='src/split'
+      - name: to json
+        run: npx  @redocly/openapi-cli bundle --output=tmp/openapi.json src/openapi.yaml
       - name: dereference to json
-        run: npx  @redocly/openapi-cli bundle --dereferenced --output=src/dereferenced/openapi.json src/openapi.yaml
-      - name: commit changes
-        uses: EndBug/add-and-commit@v7
-        with:
-          default_author: github_actions
-          message: 'split src/openapi.yaml to src/split/*.yaml and dereference to src/dereferenced/openapi.json'
-          add: 'src/split/*.yaml src/dereferenced/openapi.json'
+        run: npx  @redocly/openapi-cli bundle --dereferenced --output=tmp/dereferenced.json src/openapi.yaml
+#      - name: commit changes
+#        uses: EndBug/add-and-commit@v7
+#        with:
+#          default_author: github_actions
+#          message: 'split src/openapi.yaml to src/split/*.yaml and dereference to src/dereferenced/openapi.json'
+#          add: 'src/split/*.yaml src/dereferenced/openapi.json'
 
       - name: create docs from OAS
         uses: seeebiii/redoc-cli-github-action@v10
