@@ -25,14 +25,6 @@ jobs:
 #        env:
 #          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 #
-      - name: split OAS
-        run: npx @redocly/openapi-cli split src/openapi.yaml --outDir='src/split'
-      - name: commit split
-        uses: EndBug/add-and-commit@v7
-        with:
-          default_author: github_actions
-          message: 'split src/openapi.yaml to src/split/*.yaml'
-          add: src/split/*.yaml
       - name: to json
         run: npx  @redocly/openapi-cli bundle --output=assets/openapi.json src/openapi.yaml
       - name: dereference to json
@@ -43,8 +35,16 @@ jobs:
           default_author: github_actions
           message: dereference to json on gh-pages
           branch: gh-pages
-          add: assets/openapi.json assets/openapi.json
+          add: 'assets/openapi.json assets/openapi.json'
 
+      - name: split OAS
+        run: npx @redocly/openapi-cli split src/openapi.yaml --outDir='src/split'
+      - name: commit split
+        uses: EndBug/add-and-commit@v7
+        with:
+          default_author: github_actions
+          message: 'split src/openapi.yaml to src/split/*.yaml'
+          add: src/split/*.yaml
       - name: create docs from OAS
         uses: seeebiii/redoc-cli-github-action@v10
         with:
