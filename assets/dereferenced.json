@@ -1,0 +1,1381 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "MilkBot lactation API",
+    "description": "This service uses the MilkBot&reg; fitting engine to fit the MilkBot&reg; model to lactation data supplied as (DIM, milk weight) data points.  The returned parameter set can be substituted into the MilkBot&reg; equation<br><br> ((1 - E^((offset - t)/ramp)/2)*scale)/E^(decay X t) <br><br>to generate predicted milk production at any time in the lactation, where t is time since calving (in days, DIM=0 at calving) and E is Euler's number.<br><br> Simple formulas described at the support URL can calculate persistence, M305, or cumulative milk between dates. The fitting process uses Bayesian priors describing expected means and variance of parameter values as well as expected mean and variance in fitting error. If priors are provided, they will be used. Otherwise default values based on breed and parity will be used",
+    "termsOfService": "http://MilkBot.com/terms/",
+    "contact": {
+      "name": "Jim Ehrlich, DVM",
+      "email": "jehrlich@MilkBot.com"
+    },
+    "version": "1.2.0"
+  },
+  "paths": {
+    "/fitLactation": {
+      "get": {
+        "operationId": "fitSingle",
+        "description": "Fit a single lactation from the supplied (DIM, milk weight) data pairs using a default set of Bayesian priors based on breed and parity",
+        "requestBody": {
+          "description": "a single lactation",
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "id_key",
+                  "points"
+                ],
+                "type": "object",
+                "properties": {
+                  "id_key": {
+                    "type": "string",
+                    "description": "an identifier to key this lactation to a MBParams object with the same id_key in the response. For this reason, id_key values should be unique within a LactationList."
+                  },
+                  "breed": {
+                    "type": "string",
+                    "description": "breed of cow",
+                    "default": "H",
+                    "enum": [
+                      "H",
+                      "J",
+                      "BS",
+                      "G",
+                      "X"
+                    ]
+                  },
+                  "parity": {
+                    "type": "number",
+                    "description": "parity of this lactation",
+                    "format": "integer"
+                  },
+                  "points": {
+                    "type": "array",
+                    "items": {
+                      "required": [
+                        "dim",
+                        "milk"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "dim": {
+                          "type": "number",
+                          "format": "integer",
+                          "description": "Days since calving date"
+                        },
+                        "milk": {
+                          "type": "number",
+                          "format": "float",
+                          "description": "quantity of milk produced in one day, or a fraction of a day if day_fraction is supplied. Milk is measured in units specified by milk_unit, defaulting to kg."
+                        },
+                        "milk_unit": {
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                              "default": "kg",
+                              "enum": [
+                                "lb",
+                                "kg",
+                                "l",
+                                "g"
+                              ]
+                            }
+                          },
+                          "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                        },
+                        "day_fraction": {
+                          "type": "number",
+                          "format": "float",
+                          "default": 1,
+                          "description": "fraction of one day's production that **_milk_** represents, defaulting to 1.0"
+                        }
+                      },
+                      "description": "Measured milk production data point."
+                    }
+                  },
+                  "unit": {
+                    "required": [
+                      "name"
+                    ],
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                        "default": "kg",
+                        "enum": [
+                          "lb",
+                          "kg",
+                          "l",
+                          "g"
+                        ]
+                      }
+                    },
+                    "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                  }
+                },
+                "description": "A single lactation of any length."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Lactation fitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "decay",
+                    "id_key",
+                    "ramp",
+                    "scale"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "id_key": {
+                      "type": "string",
+                      "description": "an identifier to key fitted parameters to a lactation  with the same id_key in the request. For this reason, id_key values should be unique within a LactationList."
+                    },
+                    "scale": {
+                      "type": "number",
+                      "description": "Overall scale of milk production in units specified by milk_unit. The MilkBot&reg; model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor",
+                      "format": "float"
+                    },
+                    "ramp": {
+                      "type": "number",
+                      "description": "Length of ramp-up period at start of lactation, in days.",
+                      "format": "float"
+                    },
+                    "offset": {
+                      "type": "number",
+                      "description": "Offset between calving and theoretical start of lactation in days.",
+                      "format": "float",
+                      "default": 0
+                    },
+                    "decay": {
+                      "type": "number",
+                      "description": "first order decay constant in inverse-days that controls the decline in milk production.",
+                      "format": "float"
+                    },
+                    "milk_unit": {
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                          "default": "kg",
+                          "enum": [
+                            "lb",
+                            "kg",
+                            "l",
+                            "g"
+                          ]
+                        }
+                      },
+                      "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                    }
+                  },
+                  "description": "Parameter set for the MilkBot&reg; model"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "fields": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "fields": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fitLactations": {
+      "post": {
+        "summary": "Fit a list of lactations.",
+        "description": "This endpoint fits a group of lactations using  customized priors if they are supplied, or a default set of  priors based on breed and parity.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "lactations"
+                ],
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "name for this group of lactations"
+                  },
+                  "lactations": {
+                    "type": "array",
+                    "items": {
+                      "required": [
+                        "id_key",
+                        "points"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "id_key": {
+                          "type": "string",
+                          "description": "an identifier to key this lactation to a MBParams object with the same id_key in the response. For this reason, id_key values should be unique within a LactationList."
+                        },
+                        "breed": {
+                          "type": "string",
+                          "description": "breed of cow",
+                          "default": "H",
+                          "enum": [
+                            "H",
+                            "J",
+                            "BS",
+                            "G",
+                            "X"
+                          ]
+                        },
+                        "parity": {
+                          "type": "number",
+                          "description": "parity of this lactation",
+                          "format": "integer"
+                        },
+                        "points": {
+                          "type": "array",
+                          "items": {
+                            "required": [
+                              "dim",
+                              "milk"
+                            ],
+                            "type": "object",
+                            "properties": {
+                              "dim": {
+                                "type": "number",
+                                "format": "integer",
+                                "description": "Days since calving date"
+                              },
+                              "milk": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "quantity of milk produced in one day, or a fraction of a day if day_fraction is supplied. Milk is measured in units specified by milk_unit, defaulting to kg."
+                              },
+                              "milk_unit": {
+                                "required": [
+                                  "name"
+                                ],
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string",
+                                    "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                                    "default": "kg",
+                                    "enum": [
+                                      "lb",
+                                      "kg",
+                                      "l",
+                                      "g"
+                                    ]
+                                  }
+                                },
+                                "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                              },
+                              "day_fraction": {
+                                "type": "number",
+                                "format": "float",
+                                "default": 1,
+                                "description": "fraction of one day's production that **_milk_** represents, defaulting to 1.0"
+                              }
+                            },
+                            "description": "Measured milk production data point."
+                          }
+                        },
+                        "unit": {
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                              "default": "kg",
+                              "enum": [
+                                "lb",
+                                "kg",
+                                "l",
+                                "g"
+                              ]
+                            }
+                          },
+                          "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                        }
+                      },
+                      "description": "A single lactation of any length."
+                    }
+                  },
+                  "milk_unit": {
+                    "required": [
+                      "name"
+                    ],
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                        "default": "kg",
+                        "enum": [
+                          "lb",
+                          "kg",
+                          "l",
+                          "g"
+                        ]
+                      }
+                    },
+                    "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                  },
+                  "priors": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "means": {
+                          "required": [
+                            "decay",
+                            "id_key",
+                            "ramp",
+                            "scale"
+                          ],
+                          "type": "object",
+                          "properties": {
+                            "id_key": {
+                              "type": "string",
+                              "description": "an identifier to key fitted parameters to a lactation  with the same id_key in the request. For this reason, id_key values should be unique within a LactationList."
+                            },
+                            "scale": {
+                              "type": "number",
+                              "description": "Overall scale of milk production in units specified by milk_unit. The MilkBot&reg; model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor",
+                              "format": "float"
+                            },
+                            "ramp": {
+                              "type": "number",
+                              "description": "Length of ramp-up period at start of lactation, in days.",
+                              "format": "float"
+                            },
+                            "offset": {
+                              "type": "number",
+                              "description": "Offset between calving and theoretical start of lactation in days.",
+                              "format": "float",
+                              "default": 0
+                            },
+                            "decay": {
+                              "type": "number",
+                              "description": "first order decay constant in inverse-days that controls the decline in milk production.",
+                              "format": "float"
+                            },
+                            "milk_unit": {
+                              "required": [
+                                "name"
+                              ],
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                                  "default": "kg",
+                                  "enum": [
+                                    "lb",
+                                    "kg",
+                                    "l",
+                                    "g"
+                                  ]
+                                }
+                              },
+                              "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                            }
+                          },
+                          "description": "Parameter set for the MilkBot&reg; model"
+                        },
+                        "sd": {
+                          "required": [
+                            "decay",
+                            "id_key",
+                            "ramp",
+                            "scale"
+                          ],
+                          "type": "object",
+                          "properties": {
+                            "id_key": {
+                              "type": "string",
+                              "description": "an identifier to key fitted parameters to a lactation  with the same id_key in the request. For this reason, id_key values should be unique within a LactationList."
+                            },
+                            "scale": {
+                              "type": "number",
+                              "description": "Overall scale of milk production in units specified by milk_unit. The MilkBot&reg; model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor",
+                              "format": "float"
+                            },
+                            "ramp": {
+                              "type": "number",
+                              "description": "Length of ramp-up period at start of lactation, in days.",
+                              "format": "float"
+                            },
+                            "offset": {
+                              "type": "number",
+                              "description": "Offset between calving and theoretical start of lactation in days.",
+                              "format": "float",
+                              "default": 0
+                            },
+                            "decay": {
+                              "type": "number",
+                              "description": "first order decay constant in inverse-days that controls the decline in milk production.",
+                              "format": "float"
+                            },
+                            "milk_unit": {
+                              "required": [
+                                "name"
+                              ],
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                                  "default": "kg",
+                                  "enum": [
+                                    "lb",
+                                    "kg",
+                                    "l",
+                                    "g"
+                                  ]
+                                }
+                              },
+                              "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                            }
+                          },
+                          "description": "Parameter set for the MilkBot&reg; model"
+                        },
+                        "seMilk": {
+                          "type": "number",
+                          "format": "float"
+                        },
+                        "milk_unit": {
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                              "default": "kg",
+                              "enum": [
+                                "lb",
+                                "kg",
+                                "l",
+                                "g"
+                              ]
+                            }
+                          },
+                          "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                        }
+                      },
+                      "description": "Optional Bayesian prior expectations for use by fitting engine. If not provided, defaults based on breed and parity will be used. **_means_** are expected mean parameter values for the population **_sd_** are expected standard deviation of parameter values for the population **_seMilk_** is expected standard error of milk measurements excluding the effects of a normal lactation curve"
+                    }
+                  }
+                },
+                "description": "A list of lactations."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "MBParams List for fitted lactations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "means": {
+                      "required": [
+                        "decay",
+                        "id_key",
+                        "ramp",
+                        "scale"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "id_key": {
+                          "type": "string",
+                          "description": "an identifier to key fitted parameters to a lactation  with the same id_key in the request. For this reason, id_key values should be unique within a LactationList."
+                        },
+                        "scale": {
+                          "type": "number",
+                          "description": "Overall scale of milk production in units specified by milk_unit. The MilkBot&reg; model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor",
+                          "format": "float"
+                        },
+                        "ramp": {
+                          "type": "number",
+                          "description": "Length of ramp-up period at start of lactation, in days.",
+                          "format": "float"
+                        },
+                        "offset": {
+                          "type": "number",
+                          "description": "Offset between calving and theoretical start of lactation in days.",
+                          "format": "float",
+                          "default": 0
+                        },
+                        "decay": {
+                          "type": "number",
+                          "description": "first order decay constant in inverse-days that controls the decline in milk production.",
+                          "format": "float"
+                        },
+                        "milk_unit": {
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                              "default": "kg",
+                              "enum": [
+                                "lb",
+                                "kg",
+                                "l",
+                                "g"
+                              ]
+                            }
+                          },
+                          "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                        }
+                      },
+                      "description": "Parameter set for the MilkBot&reg; model"
+                    },
+                    "sd": {
+                      "required": [
+                        "decay",
+                        "id_key",
+                        "ramp",
+                        "scale"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "id_key": {
+                          "type": "string",
+                          "description": "an identifier to key fitted parameters to a lactation  with the same id_key in the request. For this reason, id_key values should be unique within a LactationList."
+                        },
+                        "scale": {
+                          "type": "number",
+                          "description": "Overall scale of milk production in units specified by milk_unit. The MilkBot&reg; model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor",
+                          "format": "float"
+                        },
+                        "ramp": {
+                          "type": "number",
+                          "description": "Length of ramp-up period at start of lactation, in days.",
+                          "format": "float"
+                        },
+                        "offset": {
+                          "type": "number",
+                          "description": "Offset between calving and theoretical start of lactation in days.",
+                          "format": "float",
+                          "default": 0
+                        },
+                        "decay": {
+                          "type": "number",
+                          "description": "first order decay constant in inverse-days that controls the decline in milk production.",
+                          "format": "float"
+                        },
+                        "milk_unit": {
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                              "default": "kg",
+                              "enum": [
+                                "lb",
+                                "kg",
+                                "l",
+                                "g"
+                              ]
+                            }
+                          },
+                          "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                        }
+                      },
+                      "description": "Parameter set for the MilkBot&reg; model"
+                    },
+                    "seMilk": {
+                      "type": "number",
+                      "format": "float"
+                    },
+                    "milk_unit": {
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                          "default": "kg",
+                          "enum": [
+                            "lb",
+                            "kg",
+                            "l",
+                            "g"
+                          ]
+                        }
+                      },
+                      "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                    }
+                  },
+                  "description": "Optional Bayesian prior expectations for use by fitting engine. If not provided, defaults based on breed and parity will be used. **_means_** are expected mean parameter values for the population **_sd_** are expected standard deviation of parameter values for the population **_seMilk_** is expected standard error of milk measurements excluding the effects of a normal lactation curve"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "fields": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "internalApiKey": {
+        "type": "apiKey",
+        "name": "api_key",
+        "in": "header"
+      }
+    },
+    "schemas": {
+      "MilkUnit": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+            "default": "kg",
+            "enum": [
+              "lb",
+              "kg",
+              "l",
+              "g"
+            ]
+          }
+        },
+        "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+      },
+      "MilkPt": {
+        "required": [
+          "dim",
+          "milk"
+        ],
+        "type": "object",
+        "properties": {
+          "dim": {
+            "type": "number",
+            "format": "integer",
+            "description": "Days since calving date"
+          },
+          "milk": {
+            "type": "number",
+            "format": "float",
+            "description": "quantity of milk produced in one day, or a fraction of a day if day_fraction is supplied. Milk is measured in units specified by milk_unit, defaulting to kg."
+          },
+          "milk_unit": {
+            "required": [
+              "name"
+            ],
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                "default": "kg",
+                "enum": [
+                  "lb",
+                  "kg",
+                  "l",
+                  "g"
+                ]
+              }
+            },
+            "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+          },
+          "day_fraction": {
+            "type": "number",
+            "format": "float",
+            "default": 1,
+            "description": "fraction of one day's production that **_milk_** represents, defaulting to 1.0"
+          }
+        },
+        "description": "Measured milk production data point."
+      },
+      "Lactation": {
+        "required": [
+          "id_key",
+          "points"
+        ],
+        "type": "object",
+        "properties": {
+          "id_key": {
+            "type": "string",
+            "description": "an identifier to key this lactation to a MBParams object with the same id_key in the response. For this reason, id_key values should be unique within a LactationList."
+          },
+          "breed": {
+            "type": "string",
+            "description": "breed of cow",
+            "default": "H",
+            "enum": [
+              "H",
+              "J",
+              "BS",
+              "G",
+              "X"
+            ]
+          },
+          "parity": {
+            "type": "number",
+            "description": "parity of this lactation",
+            "format": "integer"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "required": [
+                "dim",
+                "milk"
+              ],
+              "type": "object",
+              "properties": {
+                "dim": {
+                  "type": "number",
+                  "format": "integer",
+                  "description": "Days since calving date"
+                },
+                "milk": {
+                  "type": "number",
+                  "format": "float",
+                  "description": "quantity of milk produced in one day, or a fraction of a day if day_fraction is supplied. Milk is measured in units specified by milk_unit, defaulting to kg."
+                },
+                "milk_unit": {
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                      "default": "kg",
+                      "enum": [
+                        "lb",
+                        "kg",
+                        "l",
+                        "g"
+                      ]
+                    }
+                  },
+                  "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                },
+                "day_fraction": {
+                  "type": "number",
+                  "format": "float",
+                  "default": 1,
+                  "description": "fraction of one day's production that **_milk_** represents, defaulting to 1.0"
+                }
+              },
+              "description": "Measured milk production data point."
+            }
+          },
+          "unit": {
+            "required": [
+              "name"
+            ],
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                "default": "kg",
+                "enum": [
+                  "lb",
+                  "kg",
+                  "l",
+                  "g"
+                ]
+              }
+            },
+            "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+          }
+        },
+        "description": "A single lactation of any length."
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "string"
+          }
+        }
+      },
+      "Params": {
+        "required": [
+          "decay",
+          "id_key",
+          "ramp",
+          "scale"
+        ],
+        "type": "object",
+        "properties": {
+          "id_key": {
+            "type": "string",
+            "description": "an identifier to key fitted parameters to a lactation  with the same id_key in the request. For this reason, id_key values should be unique within a LactationList."
+          },
+          "scale": {
+            "type": "number",
+            "description": "Overall scale of milk production in units specified by milk_unit. The MilkBot&reg; model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor",
+            "format": "float"
+          },
+          "ramp": {
+            "type": "number",
+            "description": "Length of ramp-up period at start of lactation, in days.",
+            "format": "float"
+          },
+          "offset": {
+            "type": "number",
+            "description": "Offset between calving and theoretical start of lactation in days.",
+            "format": "float",
+            "default": 0
+          },
+          "decay": {
+            "type": "number",
+            "description": "first order decay constant in inverse-days that controls the decline in milk production.",
+            "format": "float"
+          },
+          "milk_unit": {
+            "required": [
+              "name"
+            ],
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                "default": "kg",
+                "enum": [
+                  "lb",
+                  "kg",
+                  "l",
+                  "g"
+                ]
+              }
+            },
+            "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+          }
+        },
+        "description": "Parameter set for the MilkBot&reg; model"
+      },
+      "PopulationPriors": {
+        "type": "object",
+        "properties": {
+          "means": {
+            "required": [
+              "decay",
+              "id_key",
+              "ramp",
+              "scale"
+            ],
+            "type": "object",
+            "properties": {
+              "id_key": {
+                "type": "string",
+                "description": "an identifier to key fitted parameters to a lactation  with the same id_key in the request. For this reason, id_key values should be unique within a LactationList."
+              },
+              "scale": {
+                "type": "number",
+                "description": "Overall scale of milk production in units specified by milk_unit. The MilkBot&reg; model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor",
+                "format": "float"
+              },
+              "ramp": {
+                "type": "number",
+                "description": "Length of ramp-up period at start of lactation, in days.",
+                "format": "float"
+              },
+              "offset": {
+                "type": "number",
+                "description": "Offset between calving and theoretical start of lactation in days.",
+                "format": "float",
+                "default": 0
+              },
+              "decay": {
+                "type": "number",
+                "description": "first order decay constant in inverse-days that controls the decline in milk production.",
+                "format": "float"
+              },
+              "milk_unit": {
+                "required": [
+                  "name"
+                ],
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                    "default": "kg",
+                    "enum": [
+                      "lb",
+                      "kg",
+                      "l",
+                      "g"
+                    ]
+                  }
+                },
+                "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+              }
+            },
+            "description": "Parameter set for the MilkBot&reg; model"
+          },
+          "sd": {
+            "required": [
+              "decay",
+              "id_key",
+              "ramp",
+              "scale"
+            ],
+            "type": "object",
+            "properties": {
+              "id_key": {
+                "type": "string",
+                "description": "an identifier to key fitted parameters to a lactation  with the same id_key in the request. For this reason, id_key values should be unique within a LactationList."
+              },
+              "scale": {
+                "type": "number",
+                "description": "Overall scale of milk production in units specified by milk_unit. The MilkBot&reg; model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor",
+                "format": "float"
+              },
+              "ramp": {
+                "type": "number",
+                "description": "Length of ramp-up period at start of lactation, in days.",
+                "format": "float"
+              },
+              "offset": {
+                "type": "number",
+                "description": "Offset between calving and theoretical start of lactation in days.",
+                "format": "float",
+                "default": 0
+              },
+              "decay": {
+                "type": "number",
+                "description": "first order decay constant in inverse-days that controls the decline in milk production.",
+                "format": "float"
+              },
+              "milk_unit": {
+                "required": [
+                  "name"
+                ],
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                    "default": "kg",
+                    "enum": [
+                      "lb",
+                      "kg",
+                      "l",
+                      "g"
+                    ]
+                  }
+                },
+                "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+              }
+            },
+            "description": "Parameter set for the MilkBot&reg; model"
+          },
+          "seMilk": {
+            "type": "number",
+            "format": "float"
+          },
+          "milk_unit": {
+            "required": [
+              "name"
+            ],
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                "default": "kg",
+                "enum": [
+                  "lb",
+                  "kg",
+                  "l",
+                  "g"
+                ]
+              }
+            },
+            "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+          }
+        },
+        "description": "Optional Bayesian prior expectations for use by fitting engine. If not provided, defaults based on breed and parity will be used. **_means_** are expected mean parameter values for the population **_sd_** are expected standard deviation of parameter values for the population **_seMilk_** is expected standard error of milk measurements excluding the effects of a normal lactation curve"
+      },
+      "LactationSet": {
+        "required": [
+          "lactations"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "name for this group of lactations"
+          },
+          "lactations": {
+            "type": "array",
+            "items": {
+              "required": [
+                "id_key",
+                "points"
+              ],
+              "type": "object",
+              "properties": {
+                "id_key": {
+                  "type": "string",
+                  "description": "an identifier to key this lactation to a MBParams object with the same id_key in the response. For this reason, id_key values should be unique within a LactationList."
+                },
+                "breed": {
+                  "type": "string",
+                  "description": "breed of cow",
+                  "default": "H",
+                  "enum": [
+                    "H",
+                    "J",
+                    "BS",
+                    "G",
+                    "X"
+                  ]
+                },
+                "parity": {
+                  "type": "number",
+                  "description": "parity of this lactation",
+                  "format": "integer"
+                },
+                "points": {
+                  "type": "array",
+                  "items": {
+                    "required": [
+                      "dim",
+                      "milk"
+                    ],
+                    "type": "object",
+                    "properties": {
+                      "dim": {
+                        "type": "number",
+                        "format": "integer",
+                        "description": "Days since calving date"
+                      },
+                      "milk": {
+                        "type": "number",
+                        "format": "float",
+                        "description": "quantity of milk produced in one day, or a fraction of a day if day_fraction is supplied. Milk is measured in units specified by milk_unit, defaulting to kg."
+                      },
+                      "milk_unit": {
+                        "required": [
+                          "name"
+                        ],
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                            "default": "kg",
+                            "enum": [
+                              "lb",
+                              "kg",
+                              "l",
+                              "g"
+                            ]
+                          }
+                        },
+                        "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                      },
+                      "day_fraction": {
+                        "type": "number",
+                        "format": "float",
+                        "default": 1,
+                        "description": "fraction of one day's production that **_milk_** represents, defaulting to 1.0"
+                      }
+                    },
+                    "description": "Measured milk production data point."
+                  }
+                },
+                "unit": {
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                      "default": "kg",
+                      "enum": [
+                        "lb",
+                        "kg",
+                        "l",
+                        "g"
+                      ]
+                    }
+                  },
+                  "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                }
+              },
+              "description": "A single lactation of any length."
+            }
+          },
+          "milk_unit": {
+            "required": [
+              "name"
+            ],
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                "default": "kg",
+                "enum": [
+                  "lb",
+                  "kg",
+                  "l",
+                  "g"
+                ]
+              }
+            },
+            "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+          },
+          "priors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "means": {
+                  "required": [
+                    "decay",
+                    "id_key",
+                    "ramp",
+                    "scale"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "id_key": {
+                      "type": "string",
+                      "description": "an identifier to key fitted parameters to a lactation  with the same id_key in the request. For this reason, id_key values should be unique within a LactationList."
+                    },
+                    "scale": {
+                      "type": "number",
+                      "description": "Overall scale of milk production in units specified by milk_unit. The MilkBot&reg; model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor",
+                      "format": "float"
+                    },
+                    "ramp": {
+                      "type": "number",
+                      "description": "Length of ramp-up period at start of lactation, in days.",
+                      "format": "float"
+                    },
+                    "offset": {
+                      "type": "number",
+                      "description": "Offset between calving and theoretical start of lactation in days.",
+                      "format": "float",
+                      "default": 0
+                    },
+                    "decay": {
+                      "type": "number",
+                      "description": "first order decay constant in inverse-days that controls the decline in milk production.",
+                      "format": "float"
+                    },
+                    "milk_unit": {
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                          "default": "kg",
+                          "enum": [
+                            "lb",
+                            "kg",
+                            "l",
+                            "g"
+                          ]
+                        }
+                      },
+                      "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                    }
+                  },
+                  "description": "Parameter set for the MilkBot&reg; model"
+                },
+                "sd": {
+                  "required": [
+                    "decay",
+                    "id_key",
+                    "ramp",
+                    "scale"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "id_key": {
+                      "type": "string",
+                      "description": "an identifier to key fitted parameters to a lactation  with the same id_key in the request. For this reason, id_key values should be unique within a LactationList."
+                    },
+                    "scale": {
+                      "type": "number",
+                      "description": "Overall scale of milk production in units specified by milk_unit. The MilkBot&reg; model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor",
+                      "format": "float"
+                    },
+                    "ramp": {
+                      "type": "number",
+                      "description": "Length of ramp-up period at start of lactation, in days.",
+                      "format": "float"
+                    },
+                    "offset": {
+                      "type": "number",
+                      "description": "Offset between calving and theoretical start of lactation in days.",
+                      "format": "float",
+                      "default": 0
+                    },
+                    "decay": {
+                      "type": "number",
+                      "description": "first order decay constant in inverse-days that controls the decline in milk production.",
+                      "format": "float"
+                    },
+                    "milk_unit": {
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                          "default": "kg",
+                          "enum": [
+                            "lb",
+                            "kg",
+                            "l",
+                            "g"
+                          ]
+                        }
+                      },
+                      "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                    }
+                  },
+                  "description": "Parameter set for the MilkBot&reg; model"
+                },
+                "seMilk": {
+                  "type": "number",
+                  "format": "float"
+                },
+                "milk_unit": {
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+                      "default": "kg",
+                      "enum": [
+                        "lb",
+                        "kg",
+                        "l",
+                        "g"
+                      ]
+                    }
+                  },
+                  "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
+                }
+              },
+              "description": "Optional Bayesian prior expectations for use by fitting engine. If not provided, defaults based on breed and parity will be used. **_means_** are expected mean parameter values for the population **_sd_** are expected standard deviation of parameter values for the population **_seMilk_** is expected standard error of milk measurements excluding the effects of a normal lactation curve"
+            }
+          }
+        },
+        "description": "A list of lactations."
+      }
+    }
+  }
+}
