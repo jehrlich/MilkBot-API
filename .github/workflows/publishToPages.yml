@@ -25,15 +25,10 @@ jobs:
 #        env:
 #          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 #
-      - name: install Node
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '12'
-      - name: split and dereference OAS
-      - run: |
-          npm i -g @redocly/openapi-cli@latest
-          openapi-cli split src/openapi.yaml --outDir='src/split'
-          openapi-cli bundle --dereferenced --output=src/dereferenced/openapi.json src/openapi.json
+      - name: split OAS
+        run: npx @redocly/openapi-cli split src/openapi.yaml --outDir='src/split'
+      - name: split OAS
+        run: npx  @redocly/openapi-cli bundle --dereferenced --output=src/dereferenced/openapi.json src/openapi.json
       - name: commit changes
         uses: EndBug/add-and-commit@v7
         with:
