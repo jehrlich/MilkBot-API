@@ -213,12 +213,9 @@
                   "}\r",
                   "\r",
                   "const runContractTests = pm.environment.get('env-runContractTests') == 'true';\r",
-                  "if (runContractTests) {\r",
-                  "    postman.setNextRequest('Build Schema Tests');\r",
-                  "} else {\r",
+                  "if (!runContractTests) {\r",
                   "    postman.setNextRequest('Remove Test Variables');\r",
                   "}\r",
-                  "\r",
                   "\r",
                   "function testSchemaObject( object, objectName) {\r",
                   "    if (object.type && object.type.toLowerCase() == 'object') {\r",
@@ -392,15 +389,10 @@
                   "\r",
                   "console.log(\"use server \" +pm.collectionVariables.get('coll-baseUrl'));\r",
                   "\r",
-                  "const runComponentTests = pm.environment.get('env-runComponentTests') == 'true';\r",
-                  "if(!runComponentTests){   \r",
-                  "    const runContractTests = pm.environment.get('env-runContractTests') == 'true';\r",
-                  "    if(runContractTests){\r",
-                  "        postman.setNextRequest('Build Schema Tests');\r",
-                  "    } else {\r",
-                  "        postman.setNextRequest('Remove Test Variables');\r",
-                  "    }   \r",
-                  "}"
+                  "if( !pm.collectionVariables.get('coll-baseUrl')){ \r",
+                  "    postman.setNextRequest('Remove Test Variables');\r",
+                  "}   \r",
+                  ""
                 ],
                 "type": "text/javascript"
               }
