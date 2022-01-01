@@ -93,6 +93,7 @@ components:
             abbreviated name of measurement unit lb=pounds, kg=kilograms,
             l=liters, g=grams
           default: kg
+          example: kg
           enum:
             - lb
             - kg
@@ -109,9 +110,11 @@ components:
           type: number
           format: integer
           description: Days since calving date
+          example: 33
         milk:
           type: number
           format: float
+          example: 21
           description: >-
             quantity of milk produced in one day, or a fraction of a day if
             day_fraction is supplied. Milk is measured in units specified by
@@ -122,6 +125,7 @@ components:
           type: number
           format: float
           default: 1
+          example: 0.5
           description: >-
             fraction of one day's production that **_milk_** represents,
             defaulting to 1.0
@@ -134,6 +138,7 @@ components:
       properties:
         id_key:
           type: string
+          example: Bossie123
           description: >-
             an identifier to key this lactation to a MBParams object with the
             same id_key in the response. For this reason, id_key values should
@@ -142,16 +147,12 @@ components:
           type: string
           description: breed of cow
           default: H
-          enum:
-            - H
-            - J
-            - BS
-            - G
-            - X
+          example: J
         parity:
           type: number
           description: parity of this lactation
           format: integer
+          example: 1
         points:
           type: array
           items:
@@ -161,14 +162,31 @@ components:
       description: A single lactation of any length.
     Error:
       type: object
+      description: error response per RFC 7807
+      required:
+        - title
+        - status
       properties:
-        code:
+        errorType:
+          type: string
+          description: a URI identifier that categorizes the error
+          example: /errors/incorrect-user-pass
+        title:
+          type: string
+          description: A brief, human-readable message about the error
+          example: incorrect username or password
+        status:
           type: integer
-          format: int32
-        message:
+          description: HTTP status code
+          example: 400
+        detail:
           type: string
-        fields:
+          description: a human-readable description of the specific error
+          example: Authentication failed due to incorrect username or password.
+        instance:
           type: string
+          description: a URI that identifies the specific occurrence of the error
+          example: /login/log/abc123
     Params:
       required:
         - decay
@@ -179,12 +197,14 @@ components:
       properties:
         id_key:
           type: string
+          example: Bossie12345
           description: >-
             an identifier to key fitted parameters to a lactation  with the same
             id_key in the request. For this reason, id_key values should be
             unique within a LactationList.
         scale:
           type: number
+          example: 45.5
           description: >-
             Overall scale of milk production in units specified by milk_unit.
             The MilkBot&reg; model can be converted to another unit of
@@ -193,12 +213,14 @@ components:
           format: float
         ramp:
           type: number
-          description: Length of ramp-up period at start of lactation, in days.
+          example: 20
+          description: Length of ramp-up period at start of lactation, in **days**.
           format: float
         offset:
           type: number
           description: Offset between calving and theoretical start of lactation in days.
           format: float
+          example: 0
           default: 0
         decay:
           type: number
@@ -206,6 +228,7 @@ components:
             first order decay constant in inverse-days that controls the decline
             in milk production.
           format: float
+          example: 0.02
         milk_unit:
           $ref: '#/components/schemas/MilkUnit'
       description: Parameter set for the MilkBot&reg; model
@@ -219,6 +242,8 @@ components:
         seMilk:
           type: number
           format: float
+          description: standard error in measurement of milk per day
+          example: 5.2
         milk_unit:
           $ref: '#/components/schemas/MilkUnit'
       description: >-
@@ -236,6 +261,7 @@ components:
         name:
           type: string
           description: name for this group of lactations
+          example: Example Farm
         lactations:
           type: array
           items:
