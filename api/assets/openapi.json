@@ -220,7 +220,8 @@
         "properties": {
           "scale": {
             "description": "Overall scale of milk production in units specified by milkUnit. The MilkBot&reg; model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor",
-            "format": "float"
+            "format": "float",
+            "example": 25.3
           },
           "ramp": {
             "description": "Length of ramp-up period at start of lactation, in **days**.",
@@ -308,8 +309,9 @@
         "type": "object",
         "properties": {
           "lacKey": {
+            "description": "an identifier to key for a Lactation.",
             "type": "string",
-            "description": "an identifier to key for a Lactation."
+            "example": "Bossie123"
           },
           "params": {
             "$ref": "#/components/schemas/Params"
@@ -317,12 +319,14 @@
           "n": {
             "type": "number",
             "description": "number of data points used to calculate fitted parameters.",
-            "format": "integer"
+            "format": "integer",
+            "example": 12
           },
           "sdResiduals": {
             "type": "number",
             "description": "standard deviation of residuals between data points and fitted curve.",
-            "format": "float"
+            "format": "float",
+            "example": 2.3
           },
           "milkUnit": {
             "$ref": "#/components/schemas/MilkUnit"
@@ -353,6 +357,7 @@
       },
       "FitMethod": {
         "description": "the fitting algorithm variant",
+        "type": "string",
         "enum": [
           "MilkBot@2.01"
         ],
@@ -407,24 +412,32 @@
       },
       "Discriminator": {
         "description": "data used to match prior expectation with other lacytation attributes. Breed and Parity are default discriminators, but other attributes supplied with lactations may be used to customize fitting. For example, ...",
-        "type": "array",
-        "items": {
-          "properties": {
-            "fieldName": {
-              "type": "string"
-            },
-            "match": {
-              "type": "string"
-            },
-            "lessThan": {
-              "type": "number"
-            },
-            "greaterThan": {
-              "type": "number"
-            },
-            "equal": {
-              "type": "number"
-            }
+        "type": "object",
+        "properties": {
+          "fieldName": {
+            "description": "field name (key) in input data",
+            "type": "string",
+            "example": "group"
+          },
+          "match": {
+            "description": "value that must match value in **_Lactation_** to be fitted",
+            "type": "string",
+            "example": "group 1"
+          },
+          "upperLimit": {
+            "description": "value in **_Lactation_** to be fitted must be **less** than this value",
+            "type": "number",
+            "example": 5
+          },
+          "lowerLimit": {
+            "description": "value in **_Lactation_** to be fitted must be **more** than this value",
+            "type": "number",
+            "example": 2
+          },
+          "equal": {
+            "description": "value in **_Lactation_** to be fitted must **equal** this value",
+            "type": "number",
+            "example": 2
           }
         }
       },
