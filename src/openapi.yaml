@@ -273,7 +273,7 @@ components:
           description: standard deviation of residuals between data points and fitted curve.
           format: float
         milkUnit:
-          $ref: '#/components/schemas/MilkUnit.yaml'
+          $ref: '#/components/schemas/MilkUnit'
     Options:
       description: Options to be used in fitting and returning results
       required: []
@@ -312,7 +312,7 @@ components:
           description: the priors used in fitting
           type: array
           items:
-            $ref: '#/components/schemas/PopulationPriors.yaml'
+            $ref: '#/components/schemas/PopulationPriors'
         lactations:
           type: array
           items:
