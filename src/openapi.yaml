@@ -62,7 +62,7 @@ paths:
               required:
                 - lactations
               properties:
-                 lactations:
+                lactations:
                   $ref: '#/components/schemas/LactationSet'
                 priors:
                   $ref: '#/components/schemas/PopulationPriors'
