@@ -123,9 +123,9 @@ components:
           example: 33
         milk:
           description: >-
-          quantity of milk produced in one day, or a fraction of a day
-          if **_dayFraction_** is supplied. Milk is measured in units specified
-          by **_milkUnit_**, defaulting to kg'
+            quantity of milk produced in one day, or a fraction of a day
+            if **_dayFraction_** is supplied. Milk is measured in units specified
+            by **_milkUnit_**, defaulting to kg
           type: number
           format: float
           example: 21
