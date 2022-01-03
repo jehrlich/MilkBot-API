@@ -1,0 +1,21 @@
+description: fits from a LactationSet
+type: object
+properties:
+  fitMethod:
+    $ref: ./FitMethood
+  fitDate:
+    description: ISO-8601-formatted datetime added by the server at fitting
+    type: string
+    format: date-time
+    example: 2020-01-10T10:30:37Z
+  priors:
+    description: the priors used in fitting
+    type: array
+    items:
+      $ref: ./PopulationPriors.yaml
+  lactations:
+    type: array
+    items:
+      oneOf:
+        - $ref: ./Fit.yaml
+        - $ref: ./FittedLactation.yaml
