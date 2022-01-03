@@ -290,7 +290,7 @@ components:
           default: false
           example: false
         fitMethod:
-          $ref: ./FitMethod
+          $ref: '#/components/schemas/FitMethod'
     FitMethod:
       description: the fitting algorithm variant
       enum:
@@ -301,7 +301,7 @@ components:
       type: object
       properties:
         fitMethod:
-          $ref: ./FitMethood
+          $ref: '#/components/schemas/FitMethod'
         fitDate:
           description: >-
             ISO-8601-formatted datetime added by the server at fitting
