@@ -245,10 +245,10 @@ components:
           $ref: '#/components/schemas/MilkUnit'
         priors:
           description: >-
-          Optional prior expectations to be used during fitting. This can be an array of any size.
-          For each lactation, any priors supplied will be checked in the order they are supplied
-          and the first one used for which the discriminator fits data for the lactation. If none
-          match, or none are supplied, then system defaults will be used.
+            Optional prior expectations to be used during fitting. This can be an array of any size.
+            For each lactation, any priors supplied will be checked in the order they are supplied
+            and the first one used for which the discriminator fits data for the lactation. If none
+            match, or none are supplied, then system defaults will be used.
           type: array
           items:
             $ref: '#/components/schemas/PopulationPriors'
