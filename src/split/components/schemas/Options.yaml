@@ -1,0 +1,20 @@
+description: Options to be used in fitting and returning results
+required: []
+type: object
+properties:
+  steppedFit:
+    description: >-
+      Should a seperate fitting be made for each data point instead of one fit
+      for the lactation as a whole?
+    type: boolean
+    default: false
+    example: false
+  returnInputData:
+    description: >-
+      Should all milk data be returned in the response, or only the fitted
+      parameters and lactation key?
+    type: boolean
+    default: false
+    example: false
+  fitMethod:
+    $ref: ./FitMethod

@@ -1,21 +1,32 @@
 post:
   summary: Fit a list of lactations.
   description: >-
-    This endpoint fits a group of lactations using  customized priors if they
-    are supplied, or a default set of  priors based on breed and parity.
+    Fit a group of lactations returning fitted parameter values. If
+    '**_priors_**' are supplied they will be used. Otherwise fitting will be
+    done from defaults.
   requestBody:
     content:
       application/json:
         schema:
-          $ref: ../components/schemas/LactationSet.yaml
+          required:
+            - lactations
+          properties:
+            lactations:
+              $ref: ../components/schemas/LactationSet.yaml
+            priors:
+              $ref: ../components/schemas/PopulationPriors.yaml
+            options:
+              $ref: ../components/schemas/Options.yaml
     required: true
   responses:
     '200':
-      description: MBParams List for fitted lactations
+      description: fitted parameter values for lactations
       content:
         application/json:
           schema:
-            $ref: ../components/schemas/PopulationPriors.yaml
+            type: array
+            items:
+              $ref: ../components/schemas/Fit.yaml
     default:
       description: Unexpected error
       content:
