@@ -12,15 +12,25 @@
   },
   "paths": {
     "/fitLactation": {
-      "get": {
+      "post": {
         "operationId": "fitSingle",
-        "description": "Fit a single lactation from the supplied (DIM, milk weight) data pairs using a default set of Bayesian priors based on breed and parity",
+        "description": "Fit a single lactation from the supplied array of  (DIM, milk weight) data pairs using a default tree of Bayesian priors stratified by on breed and parity.",
         "requestBody": {
           "description": "a single lactation",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Lactation"
+                "required": [
+                  "lactation"
+                ],
+                "properties": {
+                  "lactation": {
+                    "$ref": "#/components/schemas/Lactation"
+                  },
+                  "priors": {
+                    "$ref": "#/components/schemas/Priors"
+                  }
+                }
               }
             }
           },
@@ -44,11 +54,6 @@
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 }
-              },
-              "application/xml": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
               }
             }
           }
@@ -57,6 +62,7 @@
     },
     "/fitLactations": {
       "post": {
+        "operationId": "fitLactations",
         "summary": "Fit a list of lactations.",
         "description": "Fit a group of lactations returning fitted parameter values. If '**_priors_**' are supplied they will be used. Otherwise fitting will be done from defaults.",
         "requestBody": {
@@ -67,11 +73,11 @@
                   "lactations"
                 ],
                 "properties": {
-                  "lactations": {
+                  "lactationSet": {
                     "$ref": "#/components/schemas/LactationSet"
                   },
                   "priors": {
-                    "$ref": "#/components/schemas/PopulationPriors"
+                    "$ref": "#/components/schemas/PriorsTree"
                   },
                   "options": {
                     "$ref": "#/components/schemas/Options"
@@ -92,6 +98,44 @@
                   "items": {
                     "$ref": "#/components/schemas/Fit"
                   }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Priors/{milkUnit}": {
+      "get": {
+        "operationId": "getDefaultPriors",
+        "description": "Get the default Priors that will be used if an alternative is not supplied by the user",
+        "parameters": [
+          {
+            "name": "milkUnit",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/MilkUnit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lactation fitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Params"
                 }
               }
             }
@@ -160,9 +204,6 @@
             "format": "float",
             "example": 21
           },
-          "milkUnit": {
-            "$ref": "#/components/schemas/MilkUnit"
-          },
           "dayFraction": {
             "description": "fraction of one day's production that **_milk_** represents, defaulting to 1.0",
             "type": "number",
@@ -203,9 +244,6 @@
             "items": {
               "$ref": "#/components/schemas/MilkPt"
             }
-          },
-          "unit": {
-            "$ref": "#/components/schemas/MilkUnit"
           }
         }
       },
@@ -247,7 +285,30 @@
           }
         }
       },
-      "PopulationPriors": {
+      "PriorsTree": {
+        "description": "Recursive tree structure with a discriminator function that determines whether the content is applicable to a Lactation.  ",
+        "type": "object",
+        "required": [
+          "discriminator",
+          "content"
+        ],
+        "properties": {
+          "discriminator": {
+            "$ref": "#/components/schemas/Discriminator"
+          },
+          "content": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Priors"
+              },
+              {
+                "$ref": "#/components/schemas/PriorsTree"
+              }
+            ]
+          }
+        }
+      },
+      "Priors": {
         "description": "Optional Bayesian prior expectations for use by fitting engine. If not provided, defaults based on breed and parity will be used. **_means_** are the expected mean parameter values for the population and **_sd_** are expected standard deviation of parameter values for the population **_seMilk_** is expected standard error of milk measurements excluding the effects of a normal lactation curve",
         "type": "object",
         "properties": {
@@ -292,12 +353,8 @@
           "milkUnit": {
             "$ref": "#/components/schemas/MilkUnit"
           },
-          "priors": {
-            "description": "Optional prior expectations to be used during fitting. This can be an array of any size. For each lactation, any priors supplied will be checked in the order they are supplied and the first one used for which the discriminator fits data for the lactation. If none match, or none are supplied, then system defaults will be used.",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PopulationPriors"
-            }
+          "priorsTree": {
+            "$ref": "#/components/schemas/PriorsTree"
           }
         }
       },
@@ -327,15 +384,11 @@
             "description": "standard deviation of residuals between data points and fitted curve.",
             "format": "float",
             "example": 2.3
-          },
-          "milkUnit": {
-            "$ref": "#/components/schemas/MilkUnit"
           }
         }
       },
       "Options": {
         "description": "Options to be used in fitting and returning results",
-        "required": [],
         "type": "object",
         "properties": {
           "steppedFit": {
@@ -350,8 +403,23 @@
             "default": false,
             "example": false
           },
+          "returnPriors": {
+            "description": "Should the matches Priors be returned with each fit?",
+            "type": "boolean",
+            "default": false,
+            "example": false
+          },
+          "returnPath": {
+            "description": "Should parameters for each step in the fitting of each lactation be returned?",
+            "type": "boolean",
+            "default": false,
+            "example": false
+          },
           "fitMethod": {
             "$ref": "#/components/schemas/FitMethod"
+          },
+          "milkUnitReturned": {
+            "$ref": "#/components/schemas/MilkUnit"
           }
         }
       },
@@ -376,14 +444,7 @@
             "format": "date-time",
             "example": "2020-01-10T10:30:37Z"
           },
-          "priors": {
-            "description": "the priors used in fitting",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PopulationPriors"
-            }
-          },
-          "lactations": {
+          "fitted": {
             "type": "array",
             "items": {
               "oneOf": [
@@ -394,6 +455,12 @@
                   "$ref": "#/components/schemas/FittedLactation"
                 }
               ]
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Error"
             }
           }
         }
@@ -407,14 +474,26 @@
           },
           "lactation": {
             "$ref": "#/components/schemas/Lactation"
+          },
+          "priors": {
+            "$ref": "#/components/schemas/Priors"
+          },
+          "path": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Params"
+            }
           }
         }
       },
       "Discriminator": {
-        "description": "data used to match prior expectation with other lacytation attributes. Breed and Parity are default discriminators, but other attributes supplied with lactations may be used to customize fitting. For example, ...",
+        "description": "function used to match priors to lactations with specified attributes. Breed and Parity are default discriminators, but other attributes supplied with lactations may be used to customize fitting. For example, ... A Discriminator with only the  \"null discriminator\"",
         "type": "object",
+        "required": [
+          "stratum"
+        ],
         "properties": {
-          "fieldName": {
+          "stratum": {
             "description": "field name (key) in input data",
             "type": "string",
             "example": "group"
