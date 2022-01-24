@@ -1,4 +1,5 @@
 post:
+  operationId: fitLactations
   summary: Fit a list of lactations.
   description: >-
     Fit a group of lactations returning fitted parameter values. If
@@ -11,10 +12,10 @@ post:
           required:
             - lactations
           properties:
-            lactations:
+            lactationSet:
               $ref: ../components/schemas/LactationSet.yaml
             priors:
-              $ref: ../components/schemas/PopulationPriors.yaml
+              $ref: ../components/schemas/PriorsTree.yaml
             options:
               $ref: ../components/schemas/Options.yaml
     required: true

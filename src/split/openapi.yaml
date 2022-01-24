@@ -24,6 +24,8 @@ paths:
     $ref: paths/fitLactation.yaml
   /fitLactations:
     $ref: paths/fitLactations.yaml
+  /Priors/{milkUnit}:
+    $ref: paths/Priors@{milkUnit}.yaml
 components:
   securitySchemes:
     internalApiKey:
