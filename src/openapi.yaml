@@ -19,6 +19,9 @@ info:
     name: Jim Ehrlich, DVM
     email: jehrlich@MilkBot.com
   version: 1.2.0
+servers:
+  - description: Production server
+    url: https://europe-west1-numeric-analogy-337601.cloudfunctions.net/milkBot-fitter
 security:
   - ApiKeyAuth: []  
 paths:
