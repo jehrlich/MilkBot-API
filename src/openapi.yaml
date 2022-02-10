@@ -19,6 +19,8 @@ info:
     name: Jim Ehrlich, DVM
     email: jehrlich@MilkBot.com
   version: 1.2.0
+security:
+  - ApiKeyAuth: []  
 paths:
   /fitLactation:
     post:
@@ -45,7 +47,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Params"
+                $ref: "#/components/schemas/Fit"
         default:
           description: Unexpected error
           content:
@@ -64,14 +66,10 @@ paths:
           application/json:
             schema:
               required:
-                - lactations
+                - fittingJob
               properties:
-                lactationSet:
-                  $ref: "#/components/schemas/LactationSet"
-                priors:
-                  $ref: "#/components/schemas/PriorsTree"
-                options:
-                  $ref: "#/components/schemas/Options"
+                fittingJob:
+                  $ref: "#/components/schemas/FittingJob"
         required: true
       responses:
         "200":
@@ -81,7 +79,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Fit"
+                  $ref: "#/components/schemas/FittingResult"
         default:
           description: Unexpected error
           content:
@@ -115,9 +113,9 @@ paths:
 
 components:
   securitySchemes:
-    internalApiKey:
+    ApiKeyAuth:
       type: apiKey
-      name: api_key
+      name: X-API-KEY
       in: header
   schemas:
     MilkUnit:
@@ -266,10 +264,33 @@ components:
           $ref: "#/components/schemas/MilkUnit"
         discriminator:
           $ref: "#/components/schemas/Discriminator"
+    FittingJob:
+      description: A set of lactations to fit with optional priors tree and fit options..
+      required: [lactationSet]
+      type: object
+      properties:
+        lactationSet:
+          $ref: "#/components/schemas/LactationSet"
+        priorsTree:
+           $ref: "#/components/schemas/PriorsTree"
+        options:
+           $ref: "#/components/schemas/Options"
+    FittingResult:
+      description: the result of fitting a FittingJob, structured according to the FitOption.
+      required: [fits]
+      type: object
+      properties:
+        fits:
+          $ref: "#/components/schemas/Fit"
+        lactationSet:
+          $ref: "#/components/schemas/LactationSet"
+        priorsTree:
+           $ref: "#/components/schemas/PriorsTree"
+        options:
+           $ref: "#/components/schemas/Options"
     LactationSet:
-      description: A set of lactations.
-      required:
-        - lactations
+      description: A set of lactations with optional milk unit (Kg is default).
+      required: [lactations]
       type: object
       properties:
         name:
@@ -282,8 +303,6 @@ components:
             $ref: "#/components/schemas/Lactation"
         milkUnit:
           $ref: "#/components/schemas/MilkUnit"
-        priorsTree:
-          $ref: "#/components/schemas/PriorsTree"
     Fit:
       description: Results of fitting an array of data points from one lactation to the MilkBot model
       required:
@@ -355,9 +374,7 @@ components:
         fitted:
           type: array
           items:
-            oneOf:
-              - $ref: "#/components/schemas/Fit"
-              - $ref: "#/components/schemas/FittedLactation"
+            $ref: "#/components/schemas/FittedLactation"
         errors:
           type: array
           items:
@@ -365,6 +382,7 @@ components:
     FittedLactation:
       description: fits from a LactationSet
       type: object
+      required: [fit]
       properties:
         fit:
           $ref: "#/components/schemas/Fit"
