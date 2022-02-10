@@ -10,6 +10,11 @@
     },
     "version": "1.2.0"
   },
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
   "paths": {
     "/fitLactation": {
       "post": {
@@ -42,7 +47,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Params"
+                  "$ref": "#/components/schemas/Fit"
                 }
               }
             }
@@ -70,17 +75,11 @@
             "application/json": {
               "schema": {
                 "required": [
-                  "lactations"
+                  "fittingJob"
                 ],
                 "properties": {
-                  "lactationSet": {
-                    "$ref": "#/components/schemas/LactationSet"
-                  },
-                  "priors": {
-                    "$ref": "#/components/schemas/PriorsTree"
-                  },
-                  "options": {
-                    "$ref": "#/components/schemas/Options"
+                  "fittingJob": {
+                    "$ref": "#/components/schemas/FittingJob"
                   }
                 }
               }
@@ -96,7 +95,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Fit"
+                    "$ref": "#/components/schemas/FittingResult"
                   }
                 }
               }
@@ -156,9 +155,9 @@
   },
   "components": {
     "securitySchemes": {
-      "internalApiKey": {
+      "ApiKeyAuth": {
         "type": "apiKey",
-        "name": "api_key",
+        "name": "X-API-KEY",
         "in": "header"
       }
     },
@@ -332,8 +331,47 @@
           }
         }
       },
+      "FittingJob": {
+        "description": "A set of lactations to fit with optional priors tree and fit options..",
+        "required": [
+          "lactationSet"
+        ],
+        "type": "object",
+        "properties": {
+          "lactationSet": {
+            "$ref": "#/components/schemas/LactationSet"
+          },
+          "priorsTree": {
+            "$ref": "#/components/schemas/PriorsTree"
+          },
+          "options": {
+            "$ref": "#/components/schemas/Options"
+          }
+        }
+      },
+      "FittingResult": {
+        "description": "the result of fitting a FittingJob, structured according to the FitOption.",
+        "required": [
+          "fits"
+        ],
+        "type": "object",
+        "properties": {
+          "fits": {
+            "$ref": "#/components/schemas/Fit"
+          },
+          "lactationSet": {
+            "$ref": "#/components/schemas/LactationSet"
+          },
+          "priorsTree": {
+            "$ref": "#/components/schemas/PriorsTree"
+          },
+          "options": {
+            "$ref": "#/components/schemas/Options"
+          }
+        }
+      },
       "LactationSet": {
-        "description": "A set of lactations.",
+        "description": "A set of lactations with optional milk unit (Kg is default).",
         "required": [
           "lactations"
         ],
@@ -352,9 +390,6 @@
           },
           "milkUnit": {
             "$ref": "#/components/schemas/MilkUnit"
-          },
-          "priorsTree": {
-            "$ref": "#/components/schemas/PriorsTree"
           }
         }
       },
@@ -447,14 +482,7 @@
           "fitted": {
             "type": "array",
             "items": {
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/Fit"
-                },
-                {
-                  "$ref": "#/components/schemas/FittedLactation"
-                }
-              ]
+              "$ref": "#/components/schemas/FittedLactation"
             }
           },
           "errors": {
@@ -468,6 +496,9 @@
       "FittedLactation": {
         "description": "fits from a LactationSet",
         "type": "object",
+        "required": [
+          "fit"
+        ],
         "properties": {
           "fit": {
             "$ref": "#/components/schemas/Fit"
