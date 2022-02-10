@@ -1,0 +1,14 @@
+description: >-
+  Recursive tree structure with a discriminator function that determines whether
+  the content is applicable to a Lactation.  
+type: object
+required:
+  - discriminator
+  - content
+properties:
+  discriminator:
+    $ref: ./Discriminator.yaml
+  content:
+    oneOf:
+      - $ref: ./Priors.yaml
+      - $ref: ./PriorsTree.yaml

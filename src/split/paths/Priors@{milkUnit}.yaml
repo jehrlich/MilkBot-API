@@ -1,0 +1,24 @@
+get:
+  operationId: getDefaultPriors
+  description: >-
+    Get the default Priors that will be used if an alternative is not supplied
+    by the user
+  parameters:
+    - name: milkUnit
+      in: path
+      required: true
+      schema:
+        $ref: ../components/schemas/MilkUnit.yaml
+  responses:
+    '200':
+      description: Lactation fitted
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Params.yaml
+    default:
+      description: Unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/Error.yaml

@@ -1,14 +1,21 @@
-get:
+post:
   operationId: fitSingle
   description: >-
-    Fit a single lactation from the supplied (DIM, milk weight) data pairs using
-    a default set of Bayesian priors based on breed and parity
+    Fit a single lactation from the supplied array of  (DIM, milk weight) data
+    pairs using a default tree of Bayesian priors stratified by on breed and
+    parity.
   requestBody:
     description: a single lactation
     content:
       application/json:
         schema:
-          $ref: ../components/schemas/Lactation.yaml
+          required:
+            - lactation
+          properties:
+            lactation:
+              $ref: ../components/schemas/Lactation.yaml
+            priors:
+              $ref: ../components/schemas/Priors.yaml
     required: true
   responses:
     '200':
@@ -21,8 +28,5 @@ get:
       description: Unexpected error
       content:
         application/json:
-          schema:
-            $ref: ../components/schemas/Error.yaml
-        application/xml:
           schema:
             $ref: ../components/schemas/Error.yaml
