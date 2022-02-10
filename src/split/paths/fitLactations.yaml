@@ -10,14 +10,10 @@ post:
       application/json:
         schema:
           required:
-            - lactations
+            - fittingJob
           properties:
-            lactationSet:
-              $ref: ../components/schemas/LactationSet.yaml
-            priors:
-              $ref: ../components/schemas/PriorsTree.yaml
-            options:
-              $ref: ../components/schemas/Options.yaml
+            fittingJob:
+              $ref: ../components/schemas/FittingJob.yaml
     required: true
   responses:
     '200':
@@ -27,7 +23,7 @@ post:
           schema:
             type: array
             items:
-              $ref: ../components/schemas/Fit.yaml
+              $ref: ../components/schemas/FittingResult.yaml
     default:
       description: Unexpected error
       content:

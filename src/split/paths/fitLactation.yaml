@@ -23,7 +23,7 @@ post:
       content:
         application/json:
           schema:
-            $ref: ../components/schemas/Params.yaml
+            $ref: ../components/schemas/Fit.yaml
     default:
       description: Unexpected error
       content:
