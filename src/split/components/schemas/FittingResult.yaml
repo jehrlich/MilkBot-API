@@ -1,0 +1,13 @@
+description: the result of fitting a FittingJob, structured according to the FitOption.
+required:
+  - fits
+type: object
+properties:
+  fits:
+    $ref: ./Fit.yaml
+  lactationSet:
+    $ref: ./LactationSet.yaml
+  priorsTree:
+    $ref: ./PriorsTree.yaml
+  options:
+    $ref: ./Options.yaml
