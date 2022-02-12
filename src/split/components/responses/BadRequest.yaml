@@ -1,0 +1,5 @@
+description: The server could not understand the request due to invalid syntax.
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/Error.yaml

@@ -1,0 +1,5 @@
+description: The server can not find the requested resource.
+content:
+  application/json:
+    schema:
+      $ref: ../schemas/Error.yaml

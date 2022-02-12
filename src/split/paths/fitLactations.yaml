@@ -24,9 +24,7 @@ post:
             type: array
             items:
               $ref: ../components/schemas/FittingResult.yaml
-    default:
-      description: Unexpected error
-      content:
-        application/json:
-          schema:
-            $ref: ../components/schemas/Error.yaml
+    '401':
+      $ref: ../components/responses/BadRequest.yaml
+    '403':
+      $ref: ../components/responses/Unauthorized.yaml

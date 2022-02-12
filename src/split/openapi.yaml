@@ -20,7 +20,9 @@ info:
     email: jehrlich@MilkBot.com
   version: 1.2.0
 servers:
-  - description: Production server
+  - description: USA
+    url: https://milkbot.com
+  - description: Europe
     url: >-
       https://europe-west1-numeric-analogy-337601.cloudfunctions.net/milkBot-fitter
 security:
