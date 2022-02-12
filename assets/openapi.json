@@ -10,17 +10,42 @@
     },
     "version": "1.2.0"
   },
+  "servers": [
+    {
+      "description": "USA",
+      "url": "https://milkbot.com"
+    },
+    {
+      "description": "Europe",
+      "url": "https://europe-west1-numeric-analogy-337601.cloudfunctions.net/milkBot-fitter"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
   "paths": {
     "/fitLactation": {
-      "get": {
+      "post": {
         "operationId": "fitSingle",
-        "description": "Fit a single lactation from the supplied (DIM, milk weight) data pairs using a default set of Bayesian priors based on breed and parity",
+        "description": "Fit a single lactation from the supplied array of  (DIM, milk weight) data pairs using a default tree of Bayesian priors stratified by on breed and parity.",
         "requestBody": {
           "description": "a single lactation",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Lactation"
+                "required": [
+                  "lactation"
+                ],
+                "properties": {
+                  "lactation": {
+                    "$ref": "#/components/schemas/Lactation"
+                  },
+                  "priors": {
+                    "$ref": "#/components/schemas/Priors"
+                  }
+                }
               }
             }
           },
@@ -32,38 +57,37 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Params"
+                  "$ref": "#/components/schemas/Fit"
                 }
               }
             }
           },
-          "default": {
-            "description": "Unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              },
-              "application/xml": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+          "401": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
     },
     "/fitLactations": {
       "post": {
+        "operationId": "fitLactations",
         "summary": "Fit a list of lactations.",
-        "description": "This endpoint fits a group of lactations using  customized priors if they are supplied, or a default set of  priors based on breed and parity.",
+        "description": "Fit a group of lactations returning fitted parameter values. If '**_priors_**' are supplied they will be used. Otherwise fitting will be done from defaults.",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LactationSet"
+                "required": [
+                  "fittingJob"
+                ],
+                "properties": {
+                  "fittingJob": {
+                    "$ref": "#/components/schemas/FittingJob"
+                  }
+                }
               }
             }
           },
@@ -71,24 +95,57 @@
         },
         "responses": {
           "200": {
-            "description": "MBParams List for fitted lactations",
+            "description": "fitted parameter values for lactations",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PopulationPriors"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FittingResult"
+                  }
                 }
               }
             }
           },
-          "default": {
-            "description": "Unexpected error",
+          "401": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/Priors/{milkUnit}": {
+      "get": {
+        "operationId": "getDefaultPriors",
+        "description": "Get the default Priors that will be used if an alternative is not supplied by the user",
+        "parameters": [
+          {
+            "name": "milkUnit",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/MilkUnit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lactation fitted",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "$ref": "#/components/schemas/Params"
                 }
               }
             }
+          },
+          "401": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -96,10 +153,35 @@
   },
   "components": {
     "securitySchemes": {
-      "internalApiKey": {
+      "ApiKeyAuth": {
         "type": "apiKey",
-        "name": "api_key",
+        "name": "X-API-KEY",
         "in": "header"
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "401 Users must log in"
+      },
+      "BadRequest": {
+        "description": "The server could not understand the request due to invalid syntax.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The server can not find the requested resource.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
       }
     },
     "schemas": {
@@ -113,6 +195,7 @@
             "type": "string",
             "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
             "default": "kg",
+            "example": "kg",
             "enum": [
               "lb",
               "kg",
@@ -124,6 +207,7 @@
         "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
       },
       "MilkPt": {
+        "description": "Measured milk production data point.",
         "required": [
           "dim",
           "milk"
@@ -131,123 +215,123 @@
         "type": "object",
         "properties": {
           "dim": {
+            "description": "Days since calving date (DIM).",
             "type": "number",
             "format": "integer",
-            "description": "Days since calving date"
+            "example": 33
           },
           "milk": {
+            "description": "quantity of milk produced in one day, or a fraction of a day if **_dayFraction_** is supplied. Milk is measured in units specified by **_milkUnit_**, defaulting to kg",
             "type": "number",
             "format": "float",
-            "description": "quantity of milk produced in one day, or a fraction of a day if day_fraction is supplied. Milk is measured in units specified by milk_unit, defaulting to kg."
+            "example": 21
           },
-          "milk_unit": {
-            "$ref": "#/components/schemas/MilkUnit"
-          },
-          "day_fraction": {
+          "dayFraction": {
+            "description": "fraction of one day's production that **_milk_** represents, defaulting to 1.0",
             "type": "number",
             "format": "float",
             "default": 1,
-            "description": "fraction of one day's production that **_milk_** represents, defaulting to 1.0"
+            "example": 0.5
           }
-        },
-        "description": "Measured milk production data point."
+        }
       },
       "Lactation": {
+        "description": "A single lactation of any length.",
         "required": [
-          "id_key",
+          "lacKey",
           "points"
         ],
         "type": "object",
         "properties": {
-          "id_key": {
+          "lacKey": {
             "type": "string",
-            "description": "an identifier to key this lactation to a MBParams object with the same id_key in the response. For this reason, id_key values should be unique within a LactationList."
+            "example": "Bossie123",
+            "description": "an identifier to key this lactation. **_lacKey_** values must be unique within a LactationList."
           },
           "breed": {
             "type": "string",
             "description": "breed of cow",
             "default": "H",
-            "enum": [
-              "H",
-              "J",
-              "BS",
-              "G",
-              "X"
-            ]
+            "example": "J"
           },
           "parity": {
             "type": "number",
             "description": "parity of this lactation",
-            "format": "integer"
+            "format": "integer",
+            "default": 2,
+            "example": 1
           },
           "points": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/MilkPt"
             }
-          },
-          "unit": {
-            "$ref": "#/components/schemas/MilkUnit"
-          }
-        },
-        "description": "A single lactation of any length."
-      },
-      "Error": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "message": {
-            "type": "string"
-          },
-          "fields": {
-            "type": "string"
           }
         }
       },
       "Params": {
+        "description": "Parameter set for the MilkBot model",
         "required": [
           "decay",
-          "id_key",
           "ramp",
           "scale"
         ],
         "type": "object",
         "properties": {
-          "id_key": {
-            "type": "string",
-            "description": "an identifier to key fitted parameters to a lactation  with the same id_key in the request. For this reason, id_key values should be unique within a LactationList."
-          },
           "scale": {
-            "type": "number",
-            "description": "Overall scale of milk production in units specified by milk_unit. The MilkBot&reg; model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor",
-            "format": "float"
+            "description": "Overall scale of milk production in units specified by milkUnit. The MilkBot&reg; model can be converted to another unit of measurement for milk simply by multiplying the scale parameter by an appropriate conversion factor",
+            "format": "float",
+            "example": 25.3
           },
           "ramp": {
+            "description": "Length of ramp-up period at start of lactation, in **days**.",
             "type": "number",
-            "description": "Length of ramp-up period at start of lactation, in days.",
+            "example": 20,
             "format": "float"
           },
           "offset": {
             "type": "number",
-            "description": "Offset between calving and theoretical start of lactation in days.",
+            "description": "Offset between calving and theoretical start of lactation in **days**.",
             "format": "float",
+            "example": 0,
             "default": 0
           },
           "decay": {
-            "type": "number",
             "description": "first order decay constant in inverse-days that controls the decline in milk production.",
-            "format": "float"
+            "type": "number",
+            "format": "float",
+            "example": 0.02
           },
-          "milk_unit": {
+          "milkUnit": {
             "$ref": "#/components/schemas/MilkUnit"
           }
-        },
-        "description": "Parameter set for the MilkBot&reg; model"
+        }
       },
-      "PopulationPriors": {
+      "PriorsTree": {
+        "description": "Recursive tree structure with a discriminator function that determines whether the content is applicable to a Lactation.  ",
+        "type": "object",
+        "required": [
+          "discriminator",
+          "content"
+        ],
+        "properties": {
+          "discriminator": {
+            "$ref": "#/components/schemas/Discriminator"
+          },
+          "content": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/Priors"
+              },
+              {
+                "$ref": "#/components/schemas/PriorsTree"
+              }
+            ]
+          }
+        }
+      },
+      "Priors": {
+        "description": "Optional Bayesian prior expectations for use by fitting engine. If not provided, defaults based on breed and parity will be used. **_means_** are the expected mean parameter values for the population and **_sd_** are expected standard deviation of parameter values for the population **_seMilk_** is expected standard error of milk measurements excluding the effects of a normal lactation curve",
         "type": "object",
         "properties": {
           "means": {
@@ -257,24 +341,69 @@
             "$ref": "#/components/schemas/Params"
           },
           "seMilk": {
+            "description": "standard error in measurement of milk per day",
             "type": "number",
-            "format": "float"
+            "format": "float",
+            "example": 5.2
           },
-          "milk_unit": {
+          "milkUnit": {
             "$ref": "#/components/schemas/MilkUnit"
+          },
+          "discriminator": {
+            "$ref": "#/components/schemas/Discriminator"
           }
-        },
-        "description": "Optional Bayesian prior expectations for use by fitting engine. If not provided, defaults based on breed and parity will be used. **_means_** are expected mean parameter values for the population **_sd_** are expected standard deviation of parameter values for the population **_seMilk_** is expected standard error of milk measurements excluding the effects of a normal lactation curve"
+        }
+      },
+      "FittingJob": {
+        "description": "A set of lactations to fit with optional priors tree and fit options..",
+        "required": [
+          "lactationSet"
+        ],
+        "type": "object",
+        "properties": {
+          "lactationSet": {
+            "$ref": "#/components/schemas/LactationSet"
+          },
+          "priorsTree": {
+            "$ref": "#/components/schemas/PriorsTree"
+          },
+          "options": {
+            "$ref": "#/components/schemas/Options"
+          }
+        }
+      },
+      "FittingResult": {
+        "description": "the result of fitting a FittingJob, structured according to the FitOption.",
+        "required": [
+          "fits"
+        ],
+        "type": "object",
+        "properties": {
+          "fits": {
+            "$ref": "#/components/schemas/Fit"
+          },
+          "lactationSet": {
+            "$ref": "#/components/schemas/LactationSet"
+          },
+          "priorsTree": {
+            "$ref": "#/components/schemas/PriorsTree"
+          },
+          "options": {
+            "$ref": "#/components/schemas/Options"
+          }
+        }
       },
       "LactationSet": {
+        "description": "A set of lactations with optional milk unit (Kg is default).",
         "required": [
           "lactations"
         ],
         "type": "object",
         "properties": {
           "name": {
+            "description": "name for this group of lactations, such as herd name or group",
             "type": "string",
-            "description": "name for this group of lactations"
+            "example": "Example Farm"
           },
           "lactations": {
             "type": "array",
@@ -282,17 +411,203 @@
               "$ref": "#/components/schemas/Lactation"
             }
           },
-          "milk_unit": {
+          "milkUnit": {
             "$ref": "#/components/schemas/MilkUnit"
+          }
+        }
+      },
+      "Fit": {
+        "description": "Results of fitting an array of data points from one lactation to the MilkBot model",
+        "required": [
+          "params"
+        ],
+        "type": "object",
+        "properties": {
+          "lacKey": {
+            "description": "an identifier to key for a Lactation.",
+            "type": "string",
+            "example": "Bossie123"
           },
-          "priors": {
+          "params": {
+            "$ref": "#/components/schemas/Params"
+          },
+          "n": {
+            "type": "number",
+            "description": "number of data points used to calculate fitted parameters.",
+            "format": "integer",
+            "example": 12
+          },
+          "sdResiduals": {
+            "type": "number",
+            "description": "standard deviation of residuals between data points and fitted curve.",
+            "format": "float",
+            "example": 2.3
+          }
+        }
+      },
+      "Options": {
+        "description": "Options to be used in fitting and returning results",
+        "type": "object",
+        "properties": {
+          "steppedFit": {
+            "description": "Should a seperate fitting be made for each data point instead of one fit for the lactation as a whole?",
+            "type": "boolean",
+            "default": false,
+            "example": false
+          },
+          "returnInputData": {
+            "description": "Should all milk data be returned in the response, or only the fitted parameters and lactation key?",
+            "type": "boolean",
+            "default": false,
+            "example": false
+          },
+          "returnPriors": {
+            "description": "Should the matches Priors be returned with each fit?",
+            "type": "boolean",
+            "default": false,
+            "example": false
+          },
+          "returnPath": {
+            "description": "Should parameters for each step in the fitting of each lactation be returned?",
+            "type": "boolean",
+            "default": false,
+            "example": false
+          },
+          "fitMethod": {
+            "$ref": "#/components/schemas/FitMethod"
+          },
+          "milkUnitReturned": {
+            "$ref": "#/components/schemas/MilkUnit"
+          }
+        }
+      },
+      "FitMethod": {
+        "description": "the fitting algorithm variant",
+        "type": "string",
+        "enum": [
+          "MilkBot@2.01"
+        ],
+        "default": "MilkBot@2.01"
+      },
+      "FitSet": {
+        "description": "fits from a LactationSet",
+        "type": "object",
+        "properties": {
+          "fitMethod": {
+            "$ref": "#/components/schemas/FitMethod"
+          },
+          "fitDate": {
+            "description": "ISO-8601-formatted datetime added by the server at fitting",
+            "type": "string",
+            "format": "date-time",
+            "example": "2020-01-10T10:30:37Z"
+          },
+          "fitted": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/PopulationPriors"
+              "$ref": "#/components/schemas/FittedLactation"
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Error"
             }
           }
-        },
-        "description": "A list of lactations."
+        }
+      },
+      "FittedLactation": {
+        "description": "fits from a LactationSet",
+        "type": "object",
+        "required": [
+          "fit"
+        ],
+        "properties": {
+          "fit": {
+            "$ref": "#/components/schemas/Fit"
+          },
+          "lactation": {
+            "$ref": "#/components/schemas/Lactation"
+          },
+          "priors": {
+            "$ref": "#/components/schemas/Priors"
+          },
+          "path": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Params"
+            }
+          }
+        }
+      },
+      "Discriminator": {
+        "description": "function used to match priors to lactations with specified attributes. Breed and Parity are default discriminators, but other attributes supplied with lactations may be used to customize fitting. For example, ... A Discriminator with only the  \"null discriminator\"",
+        "type": "object",
+        "required": [
+          "stratum"
+        ],
+        "properties": {
+          "stratum": {
+            "description": "field name (key) in input data",
+            "type": "string",
+            "example": "group"
+          },
+          "match": {
+            "description": "value that must match value in **_Lactation_** to be fitted",
+            "type": "string",
+            "example": "group 1"
+          },
+          "upperLimit": {
+            "description": "value in **_Lactation_** to be fitted must be **less** than this value",
+            "type": "number",
+            "example": 5
+          },
+          "lowerLimit": {
+            "description": "value in **_Lactation_** to be fitted must be **more** than this value",
+            "type": "number",
+            "example": 2
+          },
+          "equal": {
+            "description": "value in **_Lactation_** to be fitted must **equal** this value",
+            "type": "number",
+            "example": 2
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "description": "error response per RFC 7807",
+        "required": [
+          "title",
+          "status"
+        ],
+        "properties": {
+          "errorType": {
+            "type": "string",
+            "description": "a URI identifier that categorizes the error",
+            "example": "/errors/incorrect-user-pass"
+          },
+          "title": {
+            "type": "string",
+            "description": "A brief, human-readable message about the error",
+            "example": "incorrect username or password"
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "example": 400
+          },
+          "detail": {
+            "type": "string",
+            "description": "a human-readable description of the specific error",
+            "example": "Authentication failed due to incorrect username or password."
+          },
+          "instance": {
+            "type": "string",
+            "description": "a URI that identifies the specific occurrence of the error",
+            "example": "/login/log/abc123"
+          }
+        }
       }
     }
   }
