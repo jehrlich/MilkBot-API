@@ -1,4 +1,4 @@
-name: Split OAS, generate docs and publish to GH Pages
+name: Generate docs and publish to GH Pages
 on:
   workflow_dispatch:
   push: #when changes are pushed to default branch for the file src/openapi.yml
@@ -25,18 +25,18 @@ jobs:
 #        env:
 #          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 #
-      - name: split OAS
-        run: npx @redocly/openapi-cli split src/openapi.yaml --outDir='src/split'
-      - name: commit split
-        uses: EndBug/add-and-commit@v7
-        with:
-          default_author: github_actions
-          message: 'split src/openapi.yaml to src/split/*.yaml'
-          add: src/split/*.yaml
+#      - name: split OAS
+#        run: npx @redocly/openapi-cli split src/openapi.yaml --outDir='src/split'
+#      - name: commit split
+#        uses: EndBug/add-and-commit@v7
+#        with:
+#          default_author: github_actions
+#          message: 'split src/openapi.yaml to src/split/*.yaml'
+#          add: src/split/*.yaml
 
       - name: build web page including JSON versions of schema
         run: |
-          npx  redoc-cli bundle src/openapi.yaml -o /docs/index.html
+          npx  redoc-cli bundle src/openapi.yaml -o docs/index.html
           npx  @redocly/openapi-cli bundle --output=docs/assets/openapi.json src/openapi.yaml
           npx  @redocly/openapi-cli bundle --dereferenced --output=docs/assets/dereferenced.json src/openapi.yaml
 
