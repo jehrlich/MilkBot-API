@@ -12,7 +12,11 @@
   },
   "servers": [
     {
-      "description": "Production server",
+      "description": "USA",
+      "url": "https://milkbot.com"
+    },
+    {
+      "description": "Europe",
       "url": "https://europe-west1-numeric-analogy-337601.cloudfunctions.net/milkBot-fitter"
     }
   ],
@@ -58,15 +62,11 @@
               }
             }
           },
-          "default": {
-            "description": "Unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+          "401": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -107,15 +107,11 @@
               }
             }
           },
-          "default": {
-            "description": "Unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+          "401": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -145,15 +141,11 @@
               }
             }
           },
-          "default": {
-            "description": "Unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
+          "401": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Unauthorized"
           }
         }
       }
@@ -165,6 +157,31 @@
         "type": "apiKey",
         "name": "X-API-KEY",
         "in": "header"
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "401 Users must log in"
+      },
+      "BadRequest": {
+        "description": "The server could not understand the request due to invalid syntax.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The server can not find the requested resource.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
       }
     },
     "schemas": {
