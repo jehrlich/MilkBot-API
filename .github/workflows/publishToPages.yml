@@ -36,7 +36,7 @@ jobs:
 
       - name: build web page including JSON versions of schema
         run: |
-          npx  redoc-cli bundle src/openapi.yaml -o docs/api.html
+          npx  redoc-cli bundle src/openapi.yaml -o /docs/index.html
           npx  @redocly/openapi-cli bundle --output=docs/assets/openapi.json src/openapi.yaml
           npx  @redocly/openapi-cli bundle --dereferenced --output=docs/assets/dereferenced.json src/openapi.yaml
 
@@ -46,7 +46,7 @@ jobs:
         with:
           branch: gh-pages
           folder: docs
-          target-folder: api
+          #target-folder: api
           clean: false
 
 #      - name: Notify slack success
