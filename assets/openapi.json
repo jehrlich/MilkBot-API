@@ -2,7 +2,7 @@
   "openapi": "3.0.1",
   "info": {
     "title": "MilkBot lactation API",
-    "description": "This service uses the MilkBot&reg; fitting engine to fit the MilkBot&reg; model to lactation data supplied as (DIM, milk weight) data points.  The returned parameter set can be substituted into the MilkBot&reg; equation<br><br> ((1 - E^((offset - t)/ramp)/2)*scale)/E^(decay X t) <br><br>to generate predicted milk production at any time in the lactation, where t is time since calving (in days, DIM=0 at calving) and E is Euler's number.<br><br> Simple formulas described at the support URL can calculate persistence, M305, or cumulative milk between dates. The fitting process uses Bayesian priors describing expected means and variance of parameter values as well as expected mean and variance in fitting error. If priors are provided, they will be used. Otherwise default values based on breed and parity will be used",
+    "description": "## MilkBot Fitting\nThis service uses the MilkBot fitting engine to fit the MilkBot\nmodel to lactation data supplied as (DIM, milk) data points.  The\nreturned parameter set can be substituted into the MilkBot\nequation<br><br> ((1 - E^((offset - t)/ramp)/2)*scale)/E^(decay X t)\n<br><br>to generate predicted milk production at any time in the lactation,\nwhere t is time since calving (in days, DIM=0 at calving) and E is Euler's\nnumber.<br><br> Simple formulas described at the support URL can calculate\npersistence, M305, or cumulative milk between dates. \n## Priors Tree\nThe fitting process uses Bayesian priors describing expected means and variance of\n parameter values as well as expected mean and variance in fitting error. If priors are\nprovided, they will be used. Otherwise default values based on breed and\nparity will be used. Use `GET /priorsTree` to see default priors.\n## Customizing\n### Priors\n### Options\n",
     "termsOfService": "http://MilkBot.com/terms/",
     "contact": {
       "name": "Jim Ehrlich, DVM",
@@ -28,7 +28,8 @@
   "paths": {
     "/fitLactation": {
       "post": {
-        "operationId": "fitSingle",
+        "operationId": "fit_single",
+        "summary": "Fit single lactation",
         "description": "Fit a single lactation from the supplied array of  (DIM, milk weight) data pairs using a default tree of Bayesian priors stratified by on breed and parity.",
         "requestBody": {
           "description": "a single lactation",
@@ -73,7 +74,7 @@
     },
     "/fitLactations": {
       "post": {
-        "operationId": "fitLactations",
+        "operationId": "fit_lactations",
         "summary": "Fit a list of lactations.",
         "description": "Fit a group of lactations returning fitted parameter values. If '**_priors_**' are supplied they will be used. Otherwise fitting will be done from defaults.",
         "requestBody": {
@@ -118,7 +119,8 @@
     },
     "/Priors/{milkUnit}": {
       "get": {
-        "operationId": "getDefaultPriors",
+        "operationId": "get_priors",
+        "summary": "Get default tree of prior expectations",
         "description": "Get the default Priors that will be used if an alternative is not supplied by the user",
         "parameters": [
           {
