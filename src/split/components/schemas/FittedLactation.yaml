@@ -1,7 +1,0 @@
-description: fits from a LactationSet
-type: object
-properties:
-  fit:
-    $ref: ./Fit.yaml
-  lactation:
-    $ref: ./Lactation.yaml

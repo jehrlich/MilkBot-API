@@ -1,4 +1,0 @@
-description: the fitting algorithm variant
-enum:
-  - MilkBot@2.01
-default: MilkBot@2.01
