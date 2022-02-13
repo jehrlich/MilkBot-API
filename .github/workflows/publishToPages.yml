@@ -38,10 +38,11 @@ jobs:
         run: |
           echo 'generate ReDoc html' 
           npx  redoc-cli bundle src/openapi.yaml -o docs/index.html
-          echo 'generate bundles json' 
+          echo 'generate bundled json' 
           npx  @redocly/openapi-cli bundle --output=docs/assets/openapi.json src/openapi.yaml
-          echo 'generate dereferenced/split json' 
-          npx  @redocly/openapi-cli bundle --dereferenced --output=docs/assets/dereferenced.json src/openapi.yaml
+ #PriorsTree is problem in dereference because of circulor ref
+ #         echo 'generate dereferenced/split json' 
+ #         npx  @redocly/openapi-cli bundle --dereferenced --output=docs/assets/dereferenced.json src/openapi.yaml
 
       - name: Publish to GH-pages
         if: success()

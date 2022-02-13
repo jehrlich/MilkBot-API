@@ -4,24 +4,35 @@ info:
   description: |
     ## MilkBot Fitting
     This service uses the MilkBot fitting engine to fit the MilkBot
-    model to lactation data supplied as (DIM, milk) data points.  The
+    model to lactation data. The
     returned parameter set can be substituted into the MilkBot
     equation<br><br> ((1 - E^((offset - t)/ramp)/2)*scale)/E^(decay X t)
     <br><br>to generate predicted milk production at any time in the lactation,
     where t is time since calving (in days, DIM=0 at calving) and E is Euler's
     number.<br><br> Simple formulas described at the support URL can calculate
-    persistence, M305, or cumulative milk between dates. 
+    persistence, M305, or cumulative milk between dates. For a fuller description of 
+    the model see [Quantifying inter-group variability in lactation curve shape and 
+    magnitude with the MilkBot® lactation model](https://peerj.com/articles/54/)
     ## API Keys
     To use this service, a valid API key must be in a `X-API-Key` header of each request. 
     For a free API Key, contact Jim Ehrlich jehrlich@MilkBot.com
     ## Priors Tree
-    The fitting process uses Bayesian priors describing expected means and variance of
-     parameter values as well as expected mean and variance in fitting error. If priors are
+    The fitting process uses Bayesian prior expectations as the expected means and standar deviation of
+    parameter values as well as expected sd of fitting error. If priors are
     provided, they will be used. Otherwise default values based on breed and
     parity will be used. Use `GET /priorsTree` to see default priors.
+    The PriorsTree uses a `discriminator` at each node to match lactations to an appropriate
+    `Priors`. 
     ## Customizing
-    ### Priors
-    ### Options
+    - **Priors** It is easy to generate a customized PriorsTree by fitting a training set of lactations,
+    then using the averages from that set as the priors for future fittings.  
+    - **Options** The optional `Options` object may be included with a `FittingJob` to control what
+    data is returned.
+    - **Milk Units**  Milk values may be in Kg (the default) or pounds (by specifying "milkUnit": "Lb")
+    ## Data constraints
+    - Fitting Jobs may exceed the maximum memory available to the fitting function. If that becomes a problem
+    please contact us and we will consider increasing the memory pool. A Workaround is to fit in small batches or 
+    as individual lactations.
   termsOfService: http://MilkBot.com/terms/
   contact:
     name: Jim Ehrlich, DVM
