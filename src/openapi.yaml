@@ -12,7 +12,7 @@ info:
     number.<br><br> Simple formulas described at the support URL can calculate
     persistence, M305, or cumulative milk between dates. 
     ## API Keys
-    To use this service, a valid API key must be in the `X-API-Key` header of each request. 
+    To use this service, a valid API key must be in a `X-API-Key` header of each request. 
     For a free API Key, contact Jim Ehrlich jehrlich@MilkBot.com
     ## Priors Tree
     The fitting process uses Bayesian priors describing expected means and variance of
