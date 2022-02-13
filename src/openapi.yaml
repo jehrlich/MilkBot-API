@@ -11,6 +11,9 @@ info:
     where t is time since calving (in days, DIM=0 at calving) and E is Euler's
     number.<br><br> Simple formulas described at the support URL can calculate
     persistence, M305, or cumulative milk between dates. 
+    ## API Keys
+    To use this service, a valid API key must be in the `X-API-Key` header of each request. 
+    For a free API Key, contact Jim Ehrlich jehrlich@MilkBot.com
     ## Priors Tree
     The fitting process uses Bayesian priors describing expected means and variance of
      parameter values as well as expected mean and variance in fitting error. If priors are
