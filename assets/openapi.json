@@ -31,6 +31,17 @@
         "operationId": "fit_single",
         "summary": "Fit single lactation",
         "description": "Fit a single lactation from the supplied array of  (DIM, milk weight) data pairs using a default tree of Bayesian priors stratified by on breed and parity.",
+        "parameters": [
+          {
+            "name": "includePath",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
         "requestBody": {
           "description": "a single lactation",
           "content": {
@@ -117,7 +128,7 @@
         }
       }
     },
-    "/Priors/{milkUnit}": {
+    "/priorstree/{milkUnit}": {
       "get": {
         "operationId": "get_priors",
         "summary": "Get default tree of prior expectations",
