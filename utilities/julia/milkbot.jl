@@ -100,7 +100,7 @@ StructTypes.StructType(::Type{Fit}) = StructTypes.Struct()
 const getPriorsTree(cred::Credentials) =
 begin    
     try
-        response = HTTP.get("$(cred.server)/priorstree?milkUnit=kg", Dict("X-API-KEY"=>cred.apikey))
+        response = HTTP.get("$(cred.server)/priorstree?milkUnit=Kg", Dict("X-API-KEY"=>cred.apikey))
         return String(response.body)
     catch e
         return "Error occurred : $e"
@@ -111,7 +111,7 @@ const fitLactation(lac::Lactation, cred::Credentials) =
 begin
     jsbody = JSON3.write("lactation" => lac)
     try
-        response = HTTP.post("$(cred.server)/fitlactation", Dict("X-API-KEY"=>cred.apikey),jsbody)
+        response = HTTP.post("$(cred.server)/fitlactation?includePath=true", Dict("X-API-KEY"=>cred.apikey),jsbody)
         return String(response.body)
     catch e
         return "Error occurred : $e"
@@ -122,7 +122,7 @@ const fitLactation(lac::Lactation, priors::Priors, cred::Credentials) =
 begin
     jsbody = JSON3.write(Dict("lactation" => lac, "priors" => priors))
     try
-        response = HTTP.post("$(cred.server)/fitlactation", Dict("X-API-KEY"=>cred.apikey),jsbody)
+        response = HTTP.post("$(cred.server)/fitlactation?includePath=true", Dict("X-API-KEY"=>cred.apikey),jsbody)
         return String(response.body)
     catch e
         return "Error occurred : $e"
