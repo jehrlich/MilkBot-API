@@ -19,8 +19,7 @@ struct Lactation
     lacKey::String
     breed::String
     parity::Integer
-    points #::Vector{MilkPoint} 
-#    Lactation(a,b,c,d) = new(Lactation(a,b,c,d))
+    points 
 end
 
 struct MBParams
@@ -33,32 +32,23 @@ MBParams(js ::JSON3.Object{Base.CodeUnits{UInt8, String}, SubArray{UInt64, 1, Ve
 MBParams(d::Dict) = MBParams(d["scale"],d["ramp"],d["decay"],d["offset"])
 
 const mbParamsArray(p::MBParams) = [p.scale, p.ramp,p.decay,p.offset]
-
 struct Fit
     lacKey::String
     params::MBParams
     n
     sdResiduals
-    path #::Union{nothing  Vector{MBParams}#:: JSON3.Array{JSON3.Object, Base.CodeUnits{UInt8, String}, SubArray{UInt64, 1, Vector{UInt64}, Tuple{UnitRange{Int64}}, true}}
-#    Fit(a,b,c,d,e)=new(a,b,c,d,e)
-#    Fit(js::JSON3.Object{Base.CodeUnits{UInt8, String}, Vector{UInt64}})=Fit(js.lacKey, MBParams(js.params), js.n, js.sdResiduals, js.path)
+    path 
 end
-
 struct FittedLactation
     lac:: Lactation
     fit:: Fit
 end    
-
 struct Priors
     means::MBParams
     sd::MBParams
     seMilk::Float16
     milkUnit::String
-    # Priors(a,b,c,d) = new(Priors(a,b,c,d))
 end
-# Priors(js::JSON3.Object{Base.CodeUnits{UInt8, String}, SubArray{UInt64, 1, Vector{UInt64}, Tuple{UnitRange{Int64}}, true}}) = 
-# new(Priors(MBParams(js.means), MBParams(js.sd), js.seMilk,js.milkUnit))
-
 struct FitOptions
     steppedFit::Bool
     returnInputData::Bool
@@ -66,11 +56,8 @@ struct FitOptions
     returnPath::Bool
     fitMethod::String  #: String = "MilkBot@2.01",
     preferredMilkUnit::String #: MilkUnit = Kg
-   # FitOptions(a,b,c,d,e,f)= new(FitOptions(a,b,c,d,e,f))
-  #  FitOptions(a,b,c,d ) = FitOptions(a,b,c,d,"MilkBot@2.01","Kg")
- end
+end
 const trackedOptions = FitOptions(false,false,false,true,"MilkBot@2.01","Kg")
-
 struct LactationSet
     name #: Option[String],
     lactations #: Seq[Lactation],
@@ -78,7 +65,6 @@ struct LactationSet
     LactationSet(a,b,c) = new(LactationSet(a,b,c))
     LactationSet(s::Vector{Lactation}) = LactationSet("testSet", s, "Kg")
 end
-
 struct FittingJob
     lactationSet::LactationSet
     priorsTree 
