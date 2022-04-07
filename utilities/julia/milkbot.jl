@@ -62,15 +62,11 @@ struct LactationSet
     name #: Option[String],
     lactations #: Seq[Lactation],
     milkUnit #: Option[MilkUnit.Value]
-    LactationSet(a,b,c) = new(LactationSet(a,b,c))
-    LactationSet(s::Vector{Lactation}) = LactationSet("testSet", s, "Kg")
 end
 struct FittingJob
     lactationSet::LactationSet
     priorsTree 
     options 
-    FittingJob(a,b,c) = new(FittingJob(a,b,c))
-    FittingJob(s::LactationSet) = FittingJob(s,nothing,nothing)
 end
 const TrackedFittingJob(l::Lactation) = FittingJob(LactationSet([l]),nothing,trackedOptions)
 
