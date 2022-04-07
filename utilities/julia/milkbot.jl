@@ -97,7 +97,7 @@ const fitLactation(lac::Lactation, cred::Credentials) =
 begin
     jsbody = JSON3.write("lactation" => lac)
     try
-        response = HTTP.post("$(cred.server)/fitlactation?includePath=true", Dict("X-API-KEY"=>cred.apikey),jsbody)
+        response = HTTP.post("$(cred.server)/fitlactation", Dict("X-API-KEY"=>cred.apikey),jsbody)
         return String(response.body)
     catch e
         return "Error occurred : $e"
@@ -108,12 +108,24 @@ const fitLactation(lac::Lactation, priors::Priors, cred::Credentials) =
 begin
     jsbody = JSON3.write(Dict("lactation" => lac, "priors" => priors))
     try
-        response = HTTP.post("$(cred.server)/fitlactation?includePath=true", Dict("X-API-KEY"=>cred.apikey),jsbody)
+        response = HTTP.post("$(cred.server)/fitlactation", Dict("X-API-KEY"=>cred.apikey),jsbody)
         return String(response.body)
     catch e
         return "Error occurred : $e"
     end    
 end
+
+const fitLactation(lac::Lactation, priors::Priors, cred::Credentials, withPath::Bool) =
+begin
+    jsbody = JSON3.write(Dict("lactation" => lac, "priors" => priors))
+    try
+        response = HTTP.post("$(cred.server)/fitlactation?includePath=$(withPath)", Dict("X-API-KEY"=>cred.apikey),jsbody)
+        return String(response.body)
+    catch e
+        return "Error occurred : $e"
+    end    
+end
+
 
 const fitLactationSet(fj::FittingJob, cred::Credentials) =
 begin
@@ -154,7 +166,7 @@ const lactationPlot(fl::FittedLactation) =
  begin
     dim = map(m -> m.dim, l.points)
     milk = map(m -> m.milk, l.points)
-    fit = JSON3.read(fitLactation(l, priors, cred), Fit) #call to API to re-fit
+    fit = JSON3.read(fitLactation(l, priors, cred, true), Fit) #call to API to re-fit
     plot(dim,milk, seriestype = :scatter, label = l.lacKey) 
     s = map(p ->milkbot(MBParams(p)) , collect(fit.path)) #vector of mb functions
     plot!(pop!(s),0,maximum(dim), color = :black, linewidth =2, label = "final",
@@ -171,7 +183,7 @@ const lactationPlot(fl::FittedLactation) =
  begin
     dim = map(m -> m.dim, fl.lac.points)
     milk = map(m -> m.milk, fl.lac.points)
-    reFit = JSON3.read(fitLactation(fl.lac, priors, cred), Fit) #call to API to re-fit
+    reFit = JSON3.read(fitLactation(fl.lac, priors, cred, true), Fit) #call to API to re-fit
     plot(dim, milk, seriestype = :scatter, label = fl.lac.lacKey)
     plot!(milkbot(fl.fit),0,maximum(dim), label = "original fit", linestyle = :dash, color = :black, linewidth =2,
     annotate = (((.4, .25), ("original SE: $(fl.fit.sdResiduals)", 10, :right))))
