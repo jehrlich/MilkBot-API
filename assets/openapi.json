@@ -1,14 +1,14 @@
 {
-  "openapi": "3.0.1",
+  "openapi": "3.0.0",
   "info": {
     "title": "MilkBot lactation API",
-    "description": "## MilkBot Fitting\nThis service uses the MilkBot fitting engine to fit the MilkBot\nmodel to lactation data. The\nreturned parameter set can be substituted into the MilkBot\nequation<br><br> ((1 - E^((offset - t)/ramp)/2)*scale)/E^(decay X t)\n<br><br>to generate predicted milk production at any time in the lactation,\nwhere t is time since calving (in days, DIM=0 at calving) and E is Euler's\nnumber.<br><br> Simple formulas described at the support URL can calculate\npersistence, M305, or cumulative milk between dates. For a fuller description of \nthe model see [Quantifying inter-group variability in lactation curve shape and \nmagnitude with the MilkBot® lactation model](https://peerj.com/articles/54/)\n## API Keys\nTo use this service, a valid API key must be in a `X-API-Key` header of each request. \nFor a free API Key, contact Jim Ehrlich jehrlich@MilkBot.com\n## Priors Tree\nThe fitting process uses Bayesian prior expectations as the expected means and standar deviation of\nparameter values as well as expected sd of fitting error. If priors are\nprovided, they will be used. Otherwise default values based on breed and\nparity will be used. Use `GET /priorsTree` to see default priors.\nThe PriorsTree uses a `discriminator` at each node to match lactations to an appropriate\n`Priors`. \n## Customizing\n- **Priors** It is easy to generate a customized PriorsTree by fitting a training set of lactations,\nthen using the averages from that set as the priors for future fittings.  \n- **Options** The optional `Options` object may be included with a `FittingJob` to control what\ndata is returned.\n- **Milk Units**  Milk values may be in Kg (the default) or pounds (by specifying \"milkUnit\": \"Lb\")\n## Data constraints\n- Fitting Jobs may exceed the maximum memory available to the fitting function. If that becomes a problem\nplease contact us and we will consider increasing the memory pool. A Workaround is to fit in small batches or \nas individual lactations.\n",
+    "description": "## MilkBot Fitting\nThis service uses the MilkBot fitting engine to fit the MilkBot\nmodel to lactation data. The\nreturned parameter set can be substituted into the MilkBot\nequation<br><br> ((1 - E^((offset - t)/ramp)/2)*scale)/E^(decay X t)\n<br><br>to generate predicted milk production at any time in the lactation,\nwhere t is time since calving (in days, DIM=0 at calving) and E is Euler's\nnumber.<br><br> Simple formulas described at the support URL can calculate\npersistence, M305, or cumulative milk between dates. For a fuller description of \nthe model see [Quantifying inter-group variability in lactation curve shape and \nmagnitude with the MilkBot® lactation model](https://peerj.com/articles/54/)\n## API Keys\nTo use this service, a valid API key must be in a `X-API-Key` header of each request. \nFor a free API Key, contact Jim Ehrlich jehrlich@MilkBot.com\n## Priors Tree\nThe fitting process uses Bayesian prior expectations as the expected means and standar deviation of\nparameter values as well as expected sd of fitting error. If priors are\nprovided, they will be used. Otherwise default values based on breed and\nparity will be used. Use `GET /priorsTree` to see default priors.\nThe PriorsTree uses a `discriminator` at each node to value lactations to an appropriate\n`Priors`. \n## Customizing\n- **Priors** It is easy to generate a customized PriorsTree by fitting a training set of lactations,\nthen using the averages from that set as the priors for future fittings.  \n- **Options** The optional `Options` object may be included with a `FittingJob` to control what\ndata is returned.\n- **Milk Units**  Milk values may be in Kg (the default) or pounds (by specifying \"milkUnit\": \"Lb\")\n## Data constraints\n- Fitting Jobs may exceed the maximum memory available to the fitting function. If that becomes a problem\nplease contact us and we will consider increasing the memory pool. A Workaround is to fit in small batches or \nas individual lactations.\n",
     "termsOfService": "http://MilkBot.com/terms/",
     "contact": {
       "name": "Jim Ehrlich, DVM",
       "email": "jehrlich@MilkBot.com"
     },
-    "version": "1.2.0"
+    "version": "1.3.0"
   },
   "servers": [
     {
@@ -33,11 +33,13 @@
         "description": "Fit a single lactation from the supplied array of  (DIM, milk weight) data pairs using a default tree of Bayesian priors stratified by on breed and parity.",
         "parameters": [
           {
+            "in": "query",
             "name": "includePath",
-            "in": "path",
+            "required": false,
             "schema": {
               "type": "boolean",
-              "default": false
+              "default": false,
+              "description": "include intermediate parameter values at each step in the iterative fit process in response"
             }
           }
         ],
@@ -127,7 +129,7 @@
         }
       }
     },
-    "/priorstree/{milkUnit}": {
+    "/priorstree": {
       "get": {
         "operationId": "get_priors",
         "summary": "Get default tree of prior expectations",
@@ -135,8 +137,8 @@
         "parameters": [
           {
             "name": "milkUnit",
-            "in": "path",
-            "required": true,
+            "in": "query",
+            "required": false,
             "schema": {
               "$ref": "#/components/schemas/MilkUnit"
             }
@@ -323,20 +325,16 @@
         "description": "Recursive tree structure with a discriminator function that determines whether the content is applicable to a Lactation.  ",
         "type": "object",
         "required": [
-          "discriminator",
-          "content"
+          "node"
         ],
         "properties": {
-          "discriminator": {
-            "$ref": "#/components/schemas/Discriminator"
-          },
-          "content": {
+          "node": {
             "oneOf": [
               {
-                "$ref": "#/components/schemas/Priors"
+                "$ref": "#/components/schemas/PriorsNode"
               },
               {
-                "$ref": "#/components/schemas/PriorsTree"
+                "$ref": "#/components/schemas/PriorsTreeNode"
               }
             ]
           }
@@ -362,7 +360,38 @@
             "$ref": "#/components/schemas/MilkUnit"
           },
           "discriminator": {
-            "$ref": "#/components/schemas/Discriminator"
+            "$ref": "#/components/schemas/LacDiscriminator"
+          }
+        }
+      },
+      "PriorsNode": {
+        "description": "Priors with a Discriminator that matches the Priors to lactations.",
+        "type": "object",
+        "properties": {
+          "priors": {
+            "$ref": "#/components/schemas/Priors"
+          },
+          "discriminator": {
+            "$ref": "#/components/schemas/LacDiscriminator"
+          }
+        }
+      },
+      "PriorsTreeNode": {
+        "description": "A Discriminator that matches teither a PriorNode or a PriorsTreeNode to lactations.",
+        "type": "object",
+        "properties": {
+          "node": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PriorsNode"
+              },
+              {
+                "$ref": "#/components/schemas/PriorsTreeNode"
+              }
+            ]
+          },
+          "discriminator": {
+            "$ref": "#/components/schemas/LacDiscriminator"
           }
         }
       },
@@ -552,37 +581,178 @@
           }
         }
       },
-      "Discriminator": {
-        "description": "function used to match priors to lactations with specified attributes. Breed and Parity are default discriminators, but other attributes supplied with lactations may be used to customize fitting. For example, ... A Discriminator with only the  \"null discriminator\"",
+      "LacDiscriminator": {
+        "description": "function used to match priors to lactations with specified attributes. Breed and Parity are default discriminators, but other attributes supplied with lactations may be used to customize fitting.",
         "type": "object",
         "required": [
-          "stratum"
+          "key",
+          "value",
+          "_type"
+        ],
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/AllMatch"
+          },
+          {
+            "$ref": "#/components/schemas/StringMatch"
+          },
+          {
+            "$ref": "#/components/schemas/NumberMatch"
+          },
+          {
+            "$ref": "#/components/schemas/EqualOrGreater"
+          },
+          {
+            "$ref": "#/components/schemas/EqualOrLess"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "_type",
+          "mapping": {
+            "models.api.AllMatch": "#/components/schemas/AllMatch",
+            "models.api.StringMatc": "#/components/schemas/StringMatch",
+            "models.api.NumberMatch": "#/components/schemas/NumberMatch",
+            "models.api.EqualOrGreater": "#/components/schemas/EqualOrGreater",
+            "models.api.EqualOrLess": "#/components/schemas/EqualOrLess"
+          }
+        }
+      },
+      "AllMatch": {
+        "description": "matches any value in the key field",
+        "type": "object",
+        "required": [
+          "key",
+          "_type"
         ],
         "properties": {
-          "stratum": {
+          "key": {
             "description": "field name (key) in input data",
             "type": "string",
-            "example": "group"
+            "example": "breed"
           },
-          "match": {
-            "description": "value that must match value in **_Lactation_** to be fitted",
+          "_type": {
+            "description": "case-insensitive name of function for comparing value to field value in lactation",
             "type": "string",
-            "example": "group 1"
+            "enum": [
+              "AllMatch"
+            ],
+            "example": "AllMatch"
+          }
+        }
+      },
+      "StringMatch": {
+        "description": "case-insensitive string match",
+        "type": "object",
+        "required": [
+          "key",
+          "value",
+          "_type"
+        ],
+        "properties": {
+          "key": {
+            "description": "field name (key) in lactation",
+            "type": "string",
+            "example": "breed"
           },
-          "upperLimit": {
-            "description": "value in **_Lactation_** to be fitted must be **less** than this value",
-            "type": "number",
-            "example": 5
+          "value": {
+            "description": "value that must match in lactation field",
+            "type": "string",
+            "example": "H"
           },
-          "lowerLimit": {
-            "description": "value in **_Lactation_** to be fitted must be **more** than this value",
+          "_type": {
+            "description": "name of function type",
+            "type": "string",
+            "enum": [
+              "StringMatch"
+            ],
+            "example": "StringMatch"
+          }
+        }
+      },
+      "NumberMatch": {
+        "description": "number match",
+        "type": "object",
+        "required": [
+          "key",
+          "value",
+          "_type"
+        ],
+        "properties": {
+          "key": {
+            "description": "field name (key) in lactation",
+            "type": "string",
+            "example": "parity"
+          },
+          "value": {
+            "description": "value that must match in lactation field",
             "type": "number",
             "example": 2
           },
-          "equal": {
-            "description": "value in **_Lactation_** to be fitted must **equal** this value",
+          "_type": {
+            "description": "name of function type",
+            "type": "string",
+            "enum": [
+              "NumberMatch"
+            ],
+            "example": "NumberMatch"
+          }
+        }
+      },
+      "EqualOrGreater": {
+        "description": "lactation has value >= this value",
+        "type": "object",
+        "required": [
+          "key",
+          "value",
+          "_type"
+        ],
+        "properties": {
+          "key": {
+            "description": "field name (key) in lactation",
+            "type": "string",
+            "example": "parity"
+          },
+          "value": {
+            "description": "value that must match in lactation field",
             "type": "number",
-            "example": 2
+            "example": 3
+          },
+          "_type": {
+            "description": "name of function type",
+            "type": "string",
+            "enum": [
+              "EqualsOrGreater"
+            ],
+            "example": "EqualsOrGreater"
+          }
+        }
+      },
+      "EqualOrLess": {
+        "description": "lactation has value >= this value",
+        "type": "object",
+        "required": [
+          "key",
+          "value",
+          "_type"
+        ],
+        "properties": {
+          "key": {
+            "description": "field name (key) in lactation",
+            "type": "string",
+            "example": "parity"
+          },
+          "value": {
+            "description": "value that must match in lactation field",
+            "type": "number",
+            "example": 3
+          },
+          "_type": {
+            "description": "name of function type",
+            "type": "string",
+            "enum": [
+              "EqualsOrLess"
+            ],
+            "example": "EqualsOrLess"
           }
         }
       },
