@@ -121,12 +121,6 @@ paths:
       summary: Get default tree of prior expectations 
       description: >-
         Get the default Priors that will be used if an alternative is not supplied by the user
-      parameters:
-        - name: milkUnit
-          in: query
-          required: false
-          schema:
-            $ref: "#/components/schemas/MilkUnit"
       responses:
         "200":
           description: Lactation fitted
@@ -470,14 +464,13 @@ components:
       discriminator:
         propertyName: _type
         mapping:
-          models.api.AllMatch: "#/components/schemas/AllMatch"
-          models.api.StringMatc: "#/components/schemas/StringMatch"
-          models.api.NumberMatch: "#/components/schemas/NumberMatch"
-          models.api.EqualOrGreater: "#/components/schemas/EqualOrGreater"
-          models.api.EqualOrLess: "#/components/schemas/EqualOrLess"
+          AllMatch: "#/components/schemas/AllMatch"
+          StringMatch: "#/components/schemas/StringMatch"
+          NumberMatch: "#/components/schemas/NumberMatch"
+          EqualOrGreater: "#/components/schemas/EqualOrGreater"
+          EqualOrLess: "#/components/schemas/EqualOrLess"
     AllMatch:
-      description: >-
-        matches any value in the key field
+      description: matches any value in the key field
       type: object
       required: [key, _type]
       properties:
@@ -492,7 +485,7 @@ components:
             - AllMatch
           example: AllMatch
     StringMatch:
-      description: case-insensitive string match
+      description: value in lactation field must match value specified here (case-insensitive)
       type: object
       required: [key,value, _type]
       properties:
@@ -501,7 +494,6 @@ components:
           type: string
           example: breed
         value:
-          description: value that must match in lactation field
           type: string
           example: H
         _type:
@@ -511,7 +503,7 @@ components:
             - StringMatch
           example: StringMatch
     NumberMatch:
-      description: number match
+      description: value in lactation field must equal value specified here
       type: object
       required: [key,value, _type]
       properties:
@@ -520,7 +512,6 @@ components:
           type: string
           example: parity
         value:
-          description: value that must match in lactation field
           type: number
           example: 2
         _type:
@@ -530,7 +521,7 @@ components:
             - NumberMatch
           example: NumberMatch
     EqualOrGreater:
-      description: lactation has value >= this value
+      description: value in lactation field must be >= value specified here
       type: object
       required: [key,value, _type]
       properties:
@@ -539,7 +530,6 @@ components:
           type: string
           example: parity
         value:
-          description: value that must match in lactation field
           type: number
           example: 3
         _type:
@@ -549,7 +539,7 @@ components:
             - EqualsOrGreater
           example: EqualsOrGreater
     EqualOrLess:
-      description: lactation has value >= this value
+      description: value in lactation field must be <= value specified here
       type: object
       required: [key,value, _type]
       properties:
@@ -558,7 +548,6 @@ components:
           type: string
           example: parity
         value:
-          description: value that must match in lactation field
           type: number
           example: 3
         _type:
