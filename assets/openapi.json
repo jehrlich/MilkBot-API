@@ -134,16 +134,6 @@
         "operationId": "get_priors",
         "summary": "Get default tree of prior expectations",
         "description": "Get the default Priors that will be used if an alternative is not supplied by the user",
-        "parameters": [
-          {
-            "name": "milkUnit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/MilkUnit"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Lactation fitted",
@@ -609,11 +599,11 @@
         "discriminator": {
           "propertyName": "_type",
           "mapping": {
-            "models.api.AllMatch": "#/components/schemas/AllMatch",
-            "models.api.StringMatc": "#/components/schemas/StringMatch",
-            "models.api.NumberMatch": "#/components/schemas/NumberMatch",
-            "models.api.EqualOrGreater": "#/components/schemas/EqualOrGreater",
-            "models.api.EqualOrLess": "#/components/schemas/EqualOrLess"
+            "AllMatch": "#/components/schemas/AllMatch",
+            "StringMatch": "#/components/schemas/StringMatch",
+            "NumberMatch": "#/components/schemas/NumberMatch",
+            "EqualOrGreater": "#/components/schemas/EqualOrGreater",
+            "EqualOrLess": "#/components/schemas/EqualOrLess"
           }
         }
       },
@@ -641,7 +631,7 @@
         }
       },
       "StringMatch": {
-        "description": "case-insensitive string match",
+        "description": "value in lactation field must match value specified here (case-insensitive)",
         "type": "object",
         "required": [
           "key",
@@ -655,7 +645,6 @@
             "example": "breed"
           },
           "value": {
-            "description": "value that must match in lactation field",
             "type": "string",
             "example": "H"
           },
@@ -670,7 +659,7 @@
         }
       },
       "NumberMatch": {
-        "description": "number match",
+        "description": "value in lactation field must equal value specified here",
         "type": "object",
         "required": [
           "key",
@@ -684,7 +673,6 @@
             "example": "parity"
           },
           "value": {
-            "description": "value that must match in lactation field",
             "type": "number",
             "example": 2
           },
@@ -699,7 +687,7 @@
         }
       },
       "EqualOrGreater": {
-        "description": "lactation has value >= this value",
+        "description": "value in lactation field must be >= value specified here",
         "type": "object",
         "required": [
           "key",
@@ -713,7 +701,6 @@
             "example": "parity"
           },
           "value": {
-            "description": "value that must match in lactation field",
             "type": "number",
             "example": 3
           },
@@ -728,7 +715,7 @@
         }
       },
       "EqualOrLess": {
-        "description": "lactation has value >= this value",
+        "description": "value in lactation field must be <= value specified here",
         "type": "object",
         "required": [
           "key",
@@ -742,7 +729,6 @@
             "example": "parity"
           },
           "value": {
-            "description": "value that must match in lactation field",
             "type": "number",
             "example": 3
           },
