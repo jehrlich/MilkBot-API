@@ -1,4 +1,4 @@
-openapi: 3.0.1
+openapi: 3.0.0
 info:
   title: MilkBot lactation API
   description: |
@@ -124,18 +124,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Unauthorized'
-  /priorstree/{milkUnit}:
+  /priorstree:
     get:
       operationId: get_priors
       summary: Get default tree of prior expectations 
       description: >-
         Get the default Priors that will be used if an alternative is not supplied by the user
-      parameters:
-        - name: milkUnit
-          in: path
-          required: true
-          schema:
-            $ref: "#/components/schemas/MilkUnit"
       responses:
         "200":
           description: Lactation fitted
@@ -506,8 +500,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Params"
-        discriminatorPath:
-          type: string
     Error:
       type: object
       description: error response per RFC 7807
