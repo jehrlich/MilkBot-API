@@ -37,7 +37,7 @@ info:
   contact:
     name: Jim Ehrlich, DVM
     email: jehrlich@MilkBot.com
-  version: 1.3.0
+  version: 1.4.0
 servers:
   - description: USA
     url: https://milkbot.com
@@ -53,14 +53,6 @@ paths:
       description: >-
         Fit a single lactation from the supplied array of  (DIM, milk weight) data pairs
         using a default tree of Bayesian priors stratified by on breed and parity.
-      parameters:
-        - in: query
-          name: includePath
-          required: false
-          schema:
-            type: boolean
-            default: false
-            description: include intermediate parameter values at each step in the iterative fit process in response
       requestBody:
         description: a single lactation
         content:
@@ -80,7 +72,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Fit"
+                $ref: "#/components/schemas/FittedLactation"
         '401':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -111,6 +103,23 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/FittingResult"
+        '401':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Unauthorized'     
+  /version:
+    get:
+      operationId: get_version
+      summary: version number of server 
+      description: >-
+        Get the current version number of the server
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Version"
         '401':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -154,6 +163,9 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
+    Version:
+      type: string
+      description: version number of server
     MilkUnit:
       required:
         - name
@@ -266,15 +278,21 @@ components:
           $ref: "#/components/schemas/MilkUnit"
     PriorsTree:
       description: >-
-        Recursive tree structure with a discriminator function that determines whether
-        the content is applicable to a Lactation.  
+        Recursive tree structure with a Polymorphic nodes (leaf or branch) 
       type: object
-      required: [node]
+      required: [_type, node]
       properties:
+        _type:
+          description: type of the tree, a PriorsLeaf or a PriorsBranch
+          type: string
+          enum:
+            - priorsbranch
+            - priorsleaf
+          example: priorsbranch
         node:
           oneOf:
-            - $ref: "#/components/schemas/PriorsNode"
-            - $ref: "#/components/schemas/PriorsTreeNode"
+            - $ref: "#/components/schemas/PriorsLeaf"
+            - $ref: "#/components/schemas/PriorsBranch"
     Priors:
       description: >-
         Optional Bayesian prior expectations for use by fitting engine. If not
@@ -284,6 +302,7 @@ components:
         **_seMilk_** is expected standard error of milk measurements excluding
         the effects of a normal lactation curve
       type: object
+      required: [means, sd, seMilk]
       properties:
         means:
           $ref: "#/components/schemas/Params"
@@ -296,28 +315,120 @@ components:
           example: 5.2
         milkUnit:
           $ref: "#/components/schemas/MilkUnit"
-        discriminator:
-          $ref: "#/components/schemas/LacDiscriminator"
-    PriorsNode:
+    PriorsLeaf:
       description: >-
-        Priors with a Discriminator that matches the Priors to lactations.
+        A terminal leaf of a PriorsTree with Priors for fitting a particular class of lactations.
       type: object
+      required:
+        - _type
+        - node
       properties:
-        priors:
-          $ref: "#/components/schemas/Priors"
-        discriminator:
-          $ref: "#/components/schemas/LacDiscriminator"
-    PriorsTreeNode:
-      description: >-
-        A Discriminator that matches teither a PriorNode or a PriorsTreeNode to lactations.
-      type: object
-      properties:
+        _type:
+          description: type of PriorsTree, always "priorsleaf"
+          type: string
+          enum: [priorsleaf]
+          example: priorsleaf
         node:
+          $ref: "#/components/schemas/Priors"
+    FilterableLeaf:
+      description: >-
+        a Priorstree with a LacFilter function that can be used to determine whether the node is suitable for a particular lactation.
+      type: object
+      required: [filter, node]
+      properties:
+        filter:
+          description: the filtering function
           oneOf:
-            - $ref: "#/components/schemas/PriorsNode"
-            - $ref: "#/components/schemas/PriorsTreeNode"
-        discriminator:
-          $ref: "#/components/schemas/LacDiscriminator"
+            - $ref: "#/components/schemas/NumberMatch"
+            - $ref: "#/components/schemas/StringMatch"
+            - $ref: "#/components/schemas/EqualOrGreater"
+          $ref: "#/components/schemas/LacFilter"
+        node:
+          $ref: "#/components/schemas/PriorsTree"
+    PriorsBranch:
+      description: >-
+        A branch in the briorsTree with a list containing filterable sub-trees or leaves.
+      type: object
+      required:
+        - _type
+        - node
+        - fieldName
+      properties:
+        _type:
+          description: type of the node, a leaf or a branch
+          type: string
+          enum:
+            - priorsbranch
+            - priorsleaf
+          example: priorsbranch
+        node:
+          type: array
+          description: a list of either sub-trees or leaves to be filtered
+          items:
+            $ref: "#/components/schemas/FilterableLeaf"
+        fieldName:
+          description: Name of field in input Lactation holding values on which the node list will be filtered
+          type: string
+          example: parity
+        default:
+          oneOf:
+            - $ref: "#/components/schemas/PriorsLeaf"
+            - $ref: "#/components/schemas/PriorsBranch"
+    LacFilter:
+      description: >-
+        Fitiltering function returning a boolean whether the object passes.
+      type: object
+      required: [_type, value]
+      properties:
+        _type:
+          description: type of the filter
+          type: string
+          enum:
+            - NumberMatch
+            - StringMatch
+            - EqualOrGreater
+        value:
+          description: the value a lactation must have in the field specified by the parent PriorsBranch.fieldName to pass the filter
+          $ref: "#/components/schemas/LacFilter"
+    NumberMatch:
+      description: >-
+        matches lactations with  a number equal to the value of the NumberMatch.
+      type: object
+      required: [_type, value]
+      properties:
+        _type:
+          description: type of the filter
+          type: string
+          enum: [NumberMatch]
+        value:
+          description: the value a lactation must have in the field specified by the parent PriorsBranch.fieldName to pass the filter
+          type: number
+    EqualOrGreater:
+      description: >-
+        matches lactations with  a number equal to or greater than the value of the EqualOrGreater.
+      type: object
+      required: [_type, value]
+      properties:
+        _type:
+          description: type of the filter
+          type: string
+          enum: [EqualOrGreater]
+        value:
+          description: the value a lactation must have >= in the field specified by the parent PriorsBranch.fieldName to pass the filter
+          type: number
+    StringMatch:
+      description: >-
+        matches lactations with  a string equal to the value of the NumberMatch, ignoring case.
+      type: object
+      required: [_type, value]
+      properties:
+        _type:
+          description: type of the filter
+          type: string
+          enum: [StringMatch]
+        value:
+          description: the value a lactation must have in the field specified by the parent PriorsBranch.fieldName to pass the filter
+          type: string
     FittingJob:
       description: A set of lactations to fit with optional priors tree and fit options..
       required: [lactationSet]
@@ -331,17 +442,17 @@ components:
            $ref: "#/components/schemas/Options"
     FittingResult:
       description: the result of fitting a FittingJob, structured according to the FitOption.
-      required: [fits]
+      required: [fits, errors]
       type: object
       properties:
         fits:
-          $ref: "#/components/schemas/Fit"
-        lactationSet:
-          $ref: "#/components/schemas/LactationSet"
-        priorsTree:
-           $ref: "#/components/schemas/PriorsTree"
-        options:
-           $ref: "#/components/schemas/Options"
+          type: array
+          items:
+            $ref: "#/components/schemas/FittedLactation"
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/Error"
     LactationSet:
       description: A set of lactations with optional milk unit (Kg is default).
       required: [lactations]
@@ -357,44 +468,12 @@ components:
             $ref: "#/components/schemas/Lactation"
         milkUnit:
           $ref: "#/components/schemas/MilkUnit"
-    Fit:
-      description: Results of fitting an array of data points from one lactation to the MilkBot model
-      required:
-        - params
-      type: object
-      properties:
-        lacKey:
-          description: an identifier to key for a Lactation.
-          type: string
-          example: Bossie123
-        params:
-          $ref: "#/components/schemas/Params"
-        n:
-          type: number
-          description: number of data points used to calculate fitted parameters.
-          format: integer
-          example: 12
-        sdResiduals:
-          type: number
-          description: standard deviation of residuals between data points and fitted curve.
-          format: float
-          example: 2.3
     Options:
       description: Options to be used in fitting and returning results
       type: object
       properties:
-        steppedFit:
-          description: Should a seperate fitting be made for each data point instead of one fit for the lactation as a whole?
-          type: boolean
-          default: false
-          example: false
         returnInputData:
           description: Should all milk data be returned in the response, or only the fitted parameters and lactation key?
-          type: boolean
-          default: false
-          example: false
-        returnPriors:
-          description: Should the matches Priors be returned with each fit?
           type: boolean
           default: false
           example: false
@@ -403,160 +482,24 @@ components:
           type: boolean
           default: false
           example: false
-        fitMethod:
-          $ref: "#/components/schemas/FitMethod"
-        milkUnitReturned:
-          $ref: "#/components/schemas/MilkUnit"
-    FitMethod:
-      description: the fitting algorithm variant
-      type: string
-      enum:
-        - MilkBot@2.01
-      default: MilkBot@2.01
-    FitSet:
-      description: fits from a LactationSet
-      type: object
-      properties:
-        fitMethod:
-          $ref: "#/components/schemas/FitMethod"
-        fitDate:
-          description: >-
-            ISO-8601-formatted datetime added by the server at fitting
-          type: string
-          format: date-time
-          example: 2020-01-10T10:30:37Z
-        fitted:
-          type: array
-          items:
-            $ref: "#/components/schemas/FittedLactation"
-        errors:
-          type: array
-          items:
-            $ref: "#/components/schemas/Error"
     FittedLactation:
-      description: fits from a LactationSet
       type: object
-      required: [fit]
+      required: [lacKey, fittedParams, seMilk, priors, path, discriminatorPath]
       properties:
-        fit:
-          $ref: "#/components/schemas/Fit"
+        lacKey:
+          type: string
+        fittedParams:
+          $ref: "#/components/schemas/Params"
         lactation:
           $ref: "#/components/schemas/Lactation"
         priors:
           $ref: "#/components/schemas/Priors"
+        seMilk:
+          type: number
         path:
           type: array
           items:
             $ref: "#/components/schemas/Params"
-    LacDiscriminator:
-      description: >-
-        function used to match priors to lactations with specified attributes. Breed and Parity
-        are default discriminators, but other attributes supplied with lactations may be used
-        to customize fitting.
-      type: object
-      required: [key, value, _type]
-      oneOf:
-        - $ref: "#/components/schemas/AllMatch"
-        - $ref: "#/components/schemas/StringMatch"
-        - $ref: "#/components/schemas/NumberMatch"
-        - $ref: "#/components/schemas/EqualOrGreater"
-        - $ref: "#/components/schemas/EqualOrLess"
-      discriminator:
-        propertyName: _type
-        mapping:
-          AllMatch: "#/components/schemas/AllMatch"
-          StringMatch: "#/components/schemas/StringMatch"
-          NumberMatch: "#/components/schemas/NumberMatch"
-          EqualOrGreater: "#/components/schemas/EqualOrGreater"
-          EqualOrLess: "#/components/schemas/EqualOrLess"
-    AllMatch:
-      description: matches any value in the key field
-      type: object
-      required: [key, _type]
-      properties:
-        key:
-          description: field name (key) in input data
-          type: string
-          example: breed
-        _type:
-          description: case-insensitive name of function for comparing value to field value in lactation
-          type: string
-          enum:
-            - AllMatch
-          example: AllMatch
-    StringMatch:
-      description: value in lactation field must match value specified here (case-insensitive)
-      type: object
-      required: [key,value, _type]
-      properties:
-        key:
-          description: field name (key) in lactation
-          type: string
-          example: breed
-        value:
-          type: string
-          example: H
-        _type:
-          description: name of function type
-          type: string
-          enum:
-            - StringMatch
-          example: StringMatch
-    NumberMatch:
-      description: value in lactation field must equal value specified here
-      type: object
-      required: [key,value, _type]
-      properties:
-        key:
-          description: field name (key) in lactation
-          type: string
-          example: parity
-        value:
-          type: number
-          example: 2
-        _type:
-          description: name of function type
-          type: string
-          enum:
-            - NumberMatch
-          example: NumberMatch
-    EqualOrGreater:
-      description: value in lactation field must be >= value specified here
-      type: object
-      required: [key,value, _type]
-      properties:
-        key:
-          description: field name (key) in lactation
-          type: string
-          example: parity
-        value:
-          type: number
-          example: 3
-        _type:
-          description: name of function type
-          type: string
-          enum:
-            - EqualsOrGreater
-          example: EqualsOrGreater
-    EqualOrLess:
-      description: value in lactation field must be <= value specified here
-      type: object
-      required: [key,value, _type]
-      properties:
-        key:
-          description: field name (key) in lactation
-          type: string
-          example: parity
-        value:
-          type: number
-          example: 3
-        _type:
-          description: name of function type
-          type: string
-          enum:
-            - EqualsOrLess
-          example: EqualsOrLess
- 
     Error:
       type: object
       description: error response per RFC 7807
