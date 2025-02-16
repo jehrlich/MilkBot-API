@@ -37,7 +37,7 @@ info:
   contact:
     name: Jim Ehrlich, DVM
     email: jehrlich@MilkBot.com
-  version: 1.4.0
+  version: 2.0.0
 servers:
   - description: USA
     url: https://milkbot.com
@@ -51,8 +51,7 @@ paths:
       operationId: fit_single
       summary: Fit single lactation
       description: >-
-        Fit a single lactation from the supplied array of  (DIM, milk weight) data pairs
-        using a default tree of Bayesian priors stratified by on breed and parity.
+        Fit a single lactation from the supplied array of  (DIM, milk weight) data pairs.
       requestBody:
         description: a single lactation
         content:
@@ -65,14 +64,15 @@ paths:
                   $ref: "#/components/schemas/Lactation"
                 priors:
                   $ref: "#/components/schemas/Priors"
-        required: true
+                options:
+                  $ref: "#/components/schemas/FitOptions"
       responses:
         "200":
           description: Lactation fitted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FittedLactation"
+                $ref: "#/components/schemas/Fit"
         '401':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -439,7 +439,7 @@ components:
         priorsTree:
            $ref: "#/components/schemas/PriorsTree"
         options:
-           $ref: "#/components/schemas/Options"
+           $ref: "#/components/schemas/FitOptions"
     FittingResult:
       description: the result of fitting a FittingJob, structured according to the FitOption.
       required: [fits, errors]
@@ -448,7 +448,7 @@ components:
         fits:
           type: array
           items:
-            $ref: "#/components/schemas/FittedLactation"
+            $ref: "#/components/schemas/Fit"
         errors:
           type: array
           items:
@@ -468,7 +468,7 @@ components:
             $ref: "#/components/schemas/Lactation"
         milkUnit:
           $ref: "#/components/schemas/MilkUnit"
-    Options:
+    FitOptions:
       description: Options to be used in fitting and returning results
       type: object
       properties:
@@ -482,9 +482,29 @@ components:
           type: boolean
           default: false
           example: false
-    FittedLactation:
+        returnDiscriminatorPath:
+          description: Should path chosen to choose priors for thios lactation be returned?
+          type: boolean
+          default: false
+          example: false
+        fitEngine:
+          description: name of fitting engine to use.
+          type: string
+          default: AnnealingFitter@2.0
+          example: AnnealingFitter@2.0
+        fitObjective:
+          description: Name of objective function to use in fitting.
+          type: string
+          default: MB1@2.0
+          example: MB1@2.0
+        preferredMilkUnit:
+          description: Milk unit to use in returned fits (not currently implemented).
+          type: string
+          default: Kg
+          example: Kg
+    Fit:
       type: object
-      required: [lacKey, fittedParams, seMilk, priors, path, discriminatorPath]
+      required: [lacKey, fittedParams, n, seMilk, priors]
       properties:
         lacKey:
           type: string
@@ -494,6 +514,9 @@ components:
           $ref: "#/components/schemas/Lactation"
         priors:
           $ref: "#/components/schemas/Priors"
+        n:
+          description: number of milk points in lactation
+          type: number
         seMilk:
           type: number
         path:
