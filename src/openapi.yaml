@@ -498,10 +498,7 @@ components:
           default: MB1@2.0
           example: MB1@2.0
         preferredMilkUnit:
-          description: Milk unit to use in returned fits (not currently implemented).
-          type: string
-          default: Kg
-          example: Kg
+          $ref: "#/components/schemas/MilkUnit
     Fit:
       type: object
       required: [lacKey, fittedParams, n, seMilk, priors]
