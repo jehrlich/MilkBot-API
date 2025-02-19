@@ -166,24 +166,6 @@ components:
     Version:
       type: string
       description: version number of server
-    MilkUnit:
-      required:
-        - name
-      type: object
-      properties:
-        name:
-          type: string
-          description: >-
-            abbreviated name of measurement unit lb=pounds, kg=kilograms,
-            l=liters, g=grams
-          default: kg
-          example: kg
-          enum:
-            - lb
-            - kg
-            - l
-            - g
-      description: Unit of measurement used for scale and milk weights, defaulting to kg.
     MilkPt:
       description: Measured milk production data point.
       required:
@@ -275,7 +257,17 @@ components:
           format: float
           example: 0.02
         milkUnit:
-          $ref: "#/components/schemas/MilkUnit"
+          type: string
+          description: >-
+            abbreviated name of measurement unit lb=pounds, kg=kilograms,
+            l=liters, g=grams
+          default: kg
+          example: kg
+          enum:
+            - lb
+            - kg
+            - l
+            - g
     PriorsTree:
       description: >-
         Recursive tree structure with a Polymorphic nodes (leaf or branch) 
@@ -314,7 +306,17 @@ components:
           format: float
           example: 5.2
         milkUnit:
-          $ref: "#/components/schemas/MilkUnit"
+          type: string
+          description: >-
+            abbreviated name of measurement unit lb=pounds, kg=kilograms,
+            l=liters, g=grams
+          default: kg
+          example: kg
+          enum:
+            - lb
+            - kg
+            - l
+            - g
     PriorsLeaf:
       description: >-
         A terminal leaf of a PriorsTree with Priors for fitting a particular class of lactations.
@@ -467,7 +469,17 @@ components:
           items:
             $ref: "#/components/schemas/Lactation"
         milkUnit:
-          $ref: "#/components/schemas/MilkUnit"
+          type: string
+          description: >-
+            abbreviated name of measurement unit lb=pounds, kg=kilograms,
+            l=liters, g=grams
+          default: kg
+          example: kg
+          enum:
+            - lb
+            - kg
+            - l
+            - g
     FitOptions:
       description: Options to be used in fitting and returning results
       type: object
@@ -498,7 +510,17 @@ components:
           default: MB1@2.0
           example: MB1@2.0
         preferredMilkUnit:
-          $ref: "#/components/schemas/MilkUnit
+          type: string
+          description: >-
+            abbreviated name of measurement unit lb=pounds, kg=kilograms,
+            l=liters, g=grams
+          default: kg
+          example: kg
+          enum:
+            - lb
+            - kg
+            - l
+            - g
     Fit:
       type: object
       required: [lacKey, fittedParams, n, seMilk, priors]
@@ -513,7 +535,7 @@ components:
           $ref: "#/components/schemas/Priors"
         n:
           description: number of milk points in lactation
-          type: number
+          type: integer
         seMilk:
           type: number
         path:
