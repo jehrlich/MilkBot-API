@@ -208,27 +208,6 @@
         "type": "string",
         "description": "version number of server"
       },
-      "MilkUnit": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
-            "default": "kg",
-            "example": "kg",
-            "enum": [
-              "lb",
-              "kg",
-              "l",
-              "g"
-            ]
-          }
-        },
-        "description": "Unit of measurement used for scale and milk weights, defaulting to kg."
-      },
       "MilkPt": {
         "description": "Measured milk production data point.",
         "required": [
@@ -326,7 +305,16 @@
             "example": 0.02
           },
           "milkUnit": {
-            "$ref": "#/components/schemas/MilkUnit"
+            "type": "string",
+            "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+            "default": "kg",
+            "example": "kg",
+            "enum": [
+              "lb",
+              "kg",
+              "l",
+              "g"
+            ]
           }
         }
       },
@@ -381,7 +369,16 @@
             "example": 5.2
           },
           "milkUnit": {
-            "$ref": "#/components/schemas/MilkUnit"
+            "type": "string",
+            "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+            "default": "kg",
+            "example": "kg",
+            "enum": [
+              "lb",
+              "kg",
+              "l",
+              "g"
+            ]
           }
         }
       },
@@ -621,7 +618,16 @@
             }
           },
           "milkUnit": {
-            "$ref": "#/components/schemas/MilkUnit"
+            "type": "string",
+            "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+            "default": "kg",
+            "example": "kg",
+            "enum": [
+              "lb",
+              "kg",
+              "l",
+              "g"
+            ]
           }
         }
       },
@@ -660,10 +666,16 @@
             "example": "MB1@2.0"
           },
           "preferredMilkUnit": {
-            "description": "Milk unit to use in returned fits (not currently implemented).",
             "type": "string",
-            "default": "Kg",
-            "example": "Kg"
+            "description": "abbreviated name of measurement unit lb=pounds, kg=kilograms, l=liters, g=grams",
+            "default": "kg",
+            "example": "kg",
+            "enum": [
+              "lb",
+              "kg",
+              "l",
+              "g"
+            ]
           }
         }
       },
@@ -672,10 +684,12 @@
         "required": [
           "lacKey",
           "fittedParams",
-          "n",
+          "nPoints",
+          "distance",
           "seMilk",
           "priors"
         ],
+        "description": "Data returned for a fitted lactation",
         "properties": {
           "lacKey": {
             "type": "string"
@@ -689,14 +703,23 @@
           "priors": {
             "$ref": "#/components/schemas/Priors"
           },
-          "n": {
+          "nPoints": {
             "description": "number of milk points in lactation",
+            "type": "integer"
+          },
+          "distance": {
             "type": "number"
           },
           "seMilk": {
             "type": "number"
           },
           "path": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Params"
+            }
+          },
+          "discriminatorPath": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Params"
