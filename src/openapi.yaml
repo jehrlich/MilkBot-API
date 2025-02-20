@@ -523,7 +523,8 @@ components:
             - g
     Fit:
       type: object
-      required: [lacKey, fittedParams, n, seMilk, priors]
+      required: [lacKey, fittedParams, nPoints, distance, seMilk, priors]
+      description: Data returned for a fitted lactation
       properties:
         lacKey:
           type: string
@@ -533,12 +534,18 @@ components:
           $ref: "#/components/schemas/Lactation"
         priors:
           $ref: "#/components/schemas/Priors"
-        n:
+        nPoints:
           description: number of milk points in lactation
           type: integer
+        distance:
+          type: number
         seMilk:
           type: number
         path:
+          type: array
+          items:
+            $ref: "#/components/schemas/Params"
+        discriminatorPath:
           type: array
           items:
             $ref: "#/components/schemas/Params"
