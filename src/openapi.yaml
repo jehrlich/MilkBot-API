@@ -186,14 +186,6 @@ components:
           type: number
           format: float
           example: 21
-        dayFraction:
-          description: >-
-            fraction of one day's production that **_milk_** represents,
-            defaulting to 1.0
-          type: number
-          format: float
-          default: 1
-          example: 0.5
     Lactation:
       description: A single lactation of any length.
       required:
@@ -228,6 +220,7 @@ components:
         - decay
         - ramp
         - scale
+        - offset
       type: object
       properties:
         scale:
@@ -236,26 +229,28 @@ components:
             The MilkBot&reg; model can be converted to another unit of
             measurement for milk simply by multiplying the scale parameter by an
             appropriate conversion factor
-          format: float
-          example: 25.3
+          type: number
+          default: 50
+          minimum: 0
+          exclusiveMinimum: true
         ramp:
           description: Length of ramp-up period at start of lactation, in **days**.
           type: number
-          example: 20
-          format: float
+          minimum: 0
+          exclusiveMinimum: true
+          default: 20
         offset:
           type: number
           description: Offset between calving and theoretical start of lactation in **days**.
-          format: float
-          example: 0
-          default: 0
+          default: -0.7
         decay:
           description: >-
             first order decay constant in inverse-days that controls the decline
             in milk production.
           type: number
-          format: float
-          example: 0.02
+          default: 0.022
+          minimum: 0
+          exclusiveMinimum: true
         milkUnit:
           type: string
           description: >-
@@ -263,28 +258,64 @@ components:
             l=liters, g=grams
           default: kg
           example: kg
-          enum:
-            - lb
-            - kg
-            - l
-            - g
+          enum: [lb, kg]
+    ParamsSD:
+              description: expected standard deviation of Parameter values
+              required:
+                - decay
+                - ramp
+                - scale
+              type: object
+              properties:
+                scale:
+                  description: >-
+                    Overall scale of milk production in units specified by milkUnit.
+                    The MilkBot&reg; model can be converted to another unit of
+                    measurement for milk simply by multiplying the scale parameter by an
+                    appropriate conversion factor
+                  type: number
+                  minimum: 0
+                  exclusiveMinimum: true
+                  default: 10.5
+                ramp:
+                  description: Length of ramp-up period at start of lactation, in **days**.
+                  type: number
+                  minimum: 0
+                  exclusiveMinimum: true
+                  default: 1.1
+                offset:
+                  type: number
+                  description: Offset between calving and theoretical start of lactation in **days**.
+                  minimum: 0
+                  exclusiveMinimum: true
+                  default: 0.7
+                decay:
+                  description: >-
+                    first order decay constant in inverse-days that controls the decline
+                    in milk production.
+                  type: number
+                  minimum: 0
+                  exclusiveMinimum: true
+                  default: 0.0006
+                milkUnit:
+                  type: string
+                  description: >-
+                    abbreviated name of measurement unit lb=pounds, kg=kilograms
+                  default: kg
+                  example: kg
+                  enum: [lb, kg]     
     PriorsTree:
       description: >-
         Recursive tree structure with a Polymorphic nodes (leaf or branch) 
       type: object
-      required: [_type, node]
+      required: [node]
       properties:
-        _type:
-          description: type of the tree, a PriorsLeaf or a PriorsBranch
-          type: string
-          enum:
-            - priorsbranch
-            - priorsleaf
-          example: priorsbranch
         node:
           oneOf:
             - $ref: "#/components/schemas/PriorsLeaf"
             - $ref: "#/components/schemas/PriorsBranch"
+          discriminator:
+            propertyName: _type
     Priors:
       description: >-
         Optional Bayesian prior expectations for use by fitting engine. If not
@@ -299,7 +330,7 @@ components:
         means:
           $ref: "#/components/schemas/Params"
         sd:
-          $ref: "#/components/schemas/Params"
+          $ref: "#/components/schemas/ParamsSD"
         seMilk:
           description: standard error in measurement of milk per day
           type: number
@@ -308,15 +339,12 @@ components:
         milkUnit:
           type: string
           description: >-
-            abbreviated name of measurement unit lb=pounds, kg=kilograms,
-            l=liters, g=grams
+            abbreviated name of measurement unit lb=pounds, kg=kilograms
           default: kg
           example: kg
           enum:
             - lb
             - kg
-            - l
-            - g
     PriorsLeaf:
       description: >-
         A terminal leaf of a PriorsTree with Priors for fitting a particular class of lactations.
@@ -326,7 +354,7 @@ components:
         - node
       properties:
         _type:
-          description: type of PriorsTree, always "priorsleaf"
+          description: type discriminator of PriorsTree, always "priorsleaf"
           type: string
           enum: [priorsleaf]
           example: priorsleaf
@@ -340,10 +368,6 @@ components:
       properties:
         filter:
           description: the filtering function
-          oneOf:
-            - $ref: "#/components/schemas/NumberMatch"
-            - $ref: "#/components/schemas/StringMatch"
-            - $ref: "#/components/schemas/EqualOrGreater"
           $ref: "#/components/schemas/LacFilter"
         node:
           $ref: "#/components/schemas/PriorsTree"
@@ -357,11 +381,9 @@ components:
         - fieldName
       properties:
         _type:
-          description: type of the node, a leaf or a branch
+          description: type discriminator of PriorsTree, always "priorsbranch"
           type: string
-          enum:
-            - priorsbranch
-            - priorsleaf
+          enum: [priorsbranch]
           example: priorsbranch
         node:
           type: array
@@ -373,6 +395,7 @@ components:
           type: string
           example: parity
         default:
+          description: fallthrough to use if none of the FilterableLeaf items in the this.node array pass the filter
           oneOf:
             - $ref: "#/components/schemas/PriorsLeaf"
             - $ref: "#/components/schemas/PriorsBranch"
@@ -391,7 +414,13 @@ components:
             - EqualOrGreater
         value:
           description: the value a lactation must have in the field specified by the parent PriorsBranch.fieldName to pass the filter
-          $ref: "#/components/schemas/LacFilter"
+          type: string
+          oneOf:
+            - $ref: "#/components/schemas/NumberMatch"
+            - $ref: "#/components/schemas/StringMatch"
+            - $ref: "#/components/schemas/EqualOrGreater"
+          discriminator:
+            propertyName: _type         
     NumberMatch:
       description: >-
         matches lactations with  a number equal to the value of the NumberMatch.
@@ -502,25 +531,25 @@ components:
         fitEngine:
           description: name of fitting engine to use.
           type: string
+          enum: [AnnealingFitter@2.0]
           default: AnnealingFitter@2.0
-          example: AnnealingFitter@2.0
         fitObjective:
           description: Name of objective function to use in fitting.
           type: string
-          default: MB1@2.0
-          example: MB1@2.0
+          enum:
+            - MB2@1.0
+            - MB1@2.0
+          default: MB2@1.0
+          example: MB2@1.0
         preferredMilkUnit:
           type: string
           description: >-
-            abbreviated name of measurement unit lb=pounds, kg=kilograms,
-            l=liters, g=grams
+            abbreviated name of measurement unit lb=pounds, kg=kilograms
           default: kg
           example: kg
           enum:
             - lb
             - kg
-            - l
-            - g
     Fit:
       type: object
       required: [lacKey, fittedParams, nPoints, distance, seMilk, priors]
