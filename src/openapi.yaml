@@ -56,8 +56,7 @@ paths:
         content:
           application/json:
             schema:
-              required:
-                - lactation
+              required: [lactation]
               properties:
                 lactation:
                   $ref: "#/components/schemas/Lactation"
@@ -87,8 +86,7 @@ paths:
         content:
           application/json:
             schema:
-              required:
-                - fittingJob
+              required: [fittingJob]
               properties:
                 fittingJob:
                   $ref: "#/components/schemas/FittingJob"
@@ -167,9 +165,7 @@ components:
       description: version number of server
     MilkPt:
       description: Measured milk production data point.
-      required:
-        - dim
-        - milk
+      required: [dim, milk]
       type: object
       properties:
         dim:
@@ -183,6 +179,21 @@ components:
           type: number
           format: float
           example: 21
+    ND:
+      description: Normal distribution described as mean and standard deviation
+      required: [mean, sd]
+      type: object
+      properties:
+        mean:
+          description: Mean of the distribution
+          type: number
+          format: float
+          example: 33.4
+        sd:
+          description: standard deviation of the distribution
+          type: number
+          format: float
+          example: 21.2
     Lactation:
       description: A single lactation of any length.
       required:
@@ -279,14 +290,22 @@ components:
         **_seMilk_** is expected standard error of milk measurements excluding
         the effects of a normal lactation curve
       type: object
-      required: [means, sd, seMilk]
+      required: [scal, ramp, decay, offset, seMilk]
       properties:
-        means:
-          $ref: "#/components/schemas/Params"
-        sd:
-          $ref: "#/components/schemas/Params"
+        scale:
+          description: expected distribution of scale parameter in units specified by milkUnit
+          $ref: "#/components/schemas/ND"
+        ramp:
+          description: expected distribution of ramp parameter in days
+          $ref: "#/components/schemas/ND"
+        decay:
+          description: expected distribution of decay parameter in inverse days
+          $ref: "#/components/schemas/ND"
+        offset:
+          description: expected distribution of offset parameter in days
+          $ref: "#/components/schemas/ND"          
         seMilk:
-          description: standard error in measurement of milk per day
+          description: expected standard deviation of milkweight residuals in units specified by milkUnit
           type: number
           format: float
           example: 5.2
