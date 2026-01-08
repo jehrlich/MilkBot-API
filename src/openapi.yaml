@@ -28,7 +28,6 @@ info:
     then using the averages from that set as the priors for future fittings.  
     - **Options** The optional `Options` object may be included with a `FittingJob` to control what
     data is returned.
-    - **Milk Units**  Milk values may be in Kg (the default) or pounds (by specifying "milkUnit": "Lb")
     ## Data constraints
     - Fitting Jobs may exceed the maximum memory available to the fitting function. If that becomes a problem
     please contact us and we will consider increasing the memory pool. A Workaround is to fit in small batches or 
@@ -57,8 +56,7 @@ paths:
         content:
           application/json:
             schema:
-              required:
-                - lactation
+              required: [lactation]
               properties:
                 lactation:
                   $ref: "#/components/schemas/Lactation"
@@ -88,8 +86,7 @@ paths:
         content:
           application/json:
             schema:
-              required:
-                - fittingJob
+              required: [fittingJob]
               properties:
                 fittingJob:
                   $ref: "#/components/schemas/FittingJob"
@@ -168,9 +165,7 @@ components:
       description: version number of server
     MilkPt:
       description: Measured milk production data point.
-      required:
-        - dim
-        - milk
+      required: [dim, milk]
       type: object
       properties:
         dim:
@@ -180,12 +175,25 @@ components:
           example: 33
         milk:
           description: >-
-            quantity of milk produced in one day, or a fraction of a day
-            if **_dayFraction_** is supplied. Milk is measured in units specified
-            by **_milkUnit_**, defaulting to kg
+            quantity of milk produced in one day in kg
           type: number
           format: float
           example: 21
+    ND:
+      description: Normal distribution described as mean and standard deviation
+      required: [mean, sd]
+      type: object
+      properties:
+        mean:
+          description: Mean of the distribution
+          type: number
+          format: float
+          example: 33.4
+        sd:
+          description: standard deviation of the distribution
+          type: number
+          format: float
+          example: 21.2
     Lactation:
       description: A single lactation of any length.
       required:
@@ -214,6 +222,9 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MilkPt"
+        milkUnit:
+         type: string
+         enum: [kg, lb]
     Params:
       description: Parameter set for the MilkBot model
       required:
@@ -225,7 +236,7 @@ components:
       properties:
         scale:
           description: >-
-            Overall scale of milk production in units specified by milkUnit.
+            Overall scale of milk production in kg units.
             The MilkBot&reg; model can be converted to another unit of
             measurement for milk simply by multiplying the scale parameter by an
             appropriate conversion factor
@@ -254,56 +265,10 @@ components:
         milkUnit:
           type: string
           description: >-
-            abbreviated name of measurement unit lb=pounds, kg=kilograms,
-            l=liters, g=grams
+            abbreviated name of  measurement unit for mile quantity lb=pounds, kg=kilograms
           default: kg
           example: kg
           enum: [lb, kg]
-    ParamsSD:
-              description: expected standard deviation of Parameter values
-              required:
-                - decay
-                - ramp
-                - scale
-              type: object
-              properties:
-                scale:
-                  description: >-
-                    Overall scale of milk production in units specified by milkUnit.
-                    The MilkBot&reg; model can be converted to another unit of
-                    measurement for milk simply by multiplying the scale parameter by an
-                    appropriate conversion factor
-                  type: number
-                  minimum: 0
-                  exclusiveMinimum: true
-                  default: 10.5
-                ramp:
-                  description: Length of ramp-up period at start of lactation, in **days**.
-                  type: number
-                  minimum: 0
-                  exclusiveMinimum: true
-                  default: 1.1
-                offset:
-                  type: number
-                  description: Offset between calving and theoretical start of lactation in **days**.
-                  minimum: 0
-                  exclusiveMinimum: true
-                  default: 0.7
-                decay:
-                  description: >-
-                    first order decay constant in inverse-days that controls the decline
-                    in milk production.
-                  type: number
-                  minimum: 0
-                  exclusiveMinimum: true
-                  default: 0.0006
-                milkUnit:
-                  type: string
-                  description: >-
-                    abbreviated name of measurement unit lb=pounds, kg=kilograms
-                  default: kg
-                  example: kg
-                  enum: [lb, kg]     
     PriorsTree:
       description: >-
         Recursive tree structure with a Polymorphic nodes (leaf or branch) 
@@ -325,26 +290,32 @@ components:
         **_seMilk_** is expected standard error of milk measurements excluding
         the effects of a normal lactation curve
       type: object
-      required: [means, sd, seMilk]
+      required: [scal, ramp, decay, offset, seMilk]
       properties:
-        means:
-          $ref: "#/components/schemas/Params"
-        sd:
-          $ref: "#/components/schemas/ParamsSD"
+        scale:
+          description: expected distribution of scale parameter in units specified by milkUnit
+          $ref: "#/components/schemas/ND"
+        ramp:
+          description: expected distribution of ramp parameter in days
+          $ref: "#/components/schemas/ND"
+        decay:
+          description: expected distribution of decay parameter in inverse days
+          $ref: "#/components/schemas/ND"
+        offset:
+          description: expected distribution of offset parameter in days
+          $ref: "#/components/schemas/ND"          
         seMilk:
-          description: standard error in measurement of milk per day
+          description: expected standard deviation of milkweight residuals in units specified by milkUnit
           type: number
           format: float
           example: 5.2
         milkUnit:
           type: string
           description: >-
-            abbreviated name of measurement unit lb=pounds, kg=kilograms
+            abbreviated name of  measurement unit for mile quantity lb=pounds, kg=kilograms
           default: kg
           example: kg
-          enum:
-            - lb
-            - kg
+          enum: [lb, kg]    
     PriorsLeaf:
       description: >-
         A terminal leaf of a PriorsTree with Priors for fitting a particular class of lactations.
@@ -412,6 +383,7 @@ components:
             - NumberMatch
             - StringMatch
             - EqualOrGreater
+            - EqualOrLessr
         value:
           description: the value a lactation must have in the field specified by the parent PriorsBranch.fieldName to pass the filter
           type: string
@@ -419,6 +391,7 @@ components:
             - $ref: "#/components/schemas/NumberMatch"
             - $ref: "#/components/schemas/StringMatch"
             - $ref: "#/components/schemas/EqualOrGreater"
+            - $ref: "#/components/schemas/EqualOrLess"
           discriminator:
             propertyName: _type         
     NumberMatch:
@@ -446,6 +419,19 @@ components:
           enum: [EqualOrGreater]
         value:
           description: the value a lactation must have >= in the field specified by the parent PriorsBranch.fieldName to pass the filter
+          type: number
+    EqualOrLess:
+      description: >-
+        matches lactations with  a number equal to or greater than the value of the EqualOrGreater.
+      type: object
+      required: [_type, value]
+      properties:
+        _type:
+          description: type of the filter
+          type: string
+          enum: [EqualOrLess]
+        value:
+          description: the value a lactation must have <= in the field specified by the parent PriorsBranch.fieldName to pass the filter
           type: number
     StringMatch:
       description: >-
@@ -484,6 +470,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Error"
+        fitEngine:
+          type: string
     LactationSet:
       description: A set of lactations with optional milk unit (Kg is default).
       required: [lactations]
@@ -497,44 +485,32 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Lactation"
-        milkUnit:
-          type: string
-          description: >-
-            abbreviated name of measurement unit lb=pounds, kg=kilograms,
-            l=liters, g=grams
-          default: kg
-          example: kg
-          enum:
-            - lb
-            - kg
-            - l
-            - g
     FitOptions:
       description: Options to be used in fitting and returning results
       type: object
       properties:
         returnInputData:
-          description: Should all milk data be returned in the response, or only the fitted parameters and lactation key?
+          description: return the lactation milk point data along with the fitted parameters
           type: boolean
           default: false
           example: false
         returnPath:
-          description: Should parameters for each step in the fitting of each lactation be returned?
+          description: return fitted parameters for each iteration of the fitting process
           type: boolean
           default: false
           example: false
         returnDiscriminatorPath:
-          description: Should path chosen to choose priors for thios lactation be returned?
+          description: return the discriminator path showing how priors were selected
           type: boolean
           default: false
           example: false
         fitEngine:
-          description: name of fitting engine to use.
+          description: name of fitting engine to use
           type: string
           enum: [AnnealingFitter@2.0]
           default: AnnealingFitter@2.0
         fitObjective:
-          description: Name of objective function to use in fitting.
+          description: name of the fitting objective to use
           type: string
           enum:
             - MB2@1.0
@@ -544,7 +520,7 @@ components:
         preferredMilkUnit:
           type: string
           description: >-
-            abbreviated name of measurement unit lb=pounds, kg=kilograms
+            abbreviated name of preferred measurement unit for mile quantity lb=pounds, kg=kilograms
           default: kg
           example: kg
           enum:
@@ -568,6 +544,7 @@ components:
           type: integer
         distance:
           type: number
+          description:  A measure of fit quality, lower distance indicates a better fit
         seMilk:
           type: number
         path:
@@ -575,9 +552,7 @@ components:
           items:
             $ref: "#/components/schemas/Params"
         discriminatorPath:
-          type: array
-          items:
-            $ref: "#/components/schemas/Params"
+          type: string
     Error:
       type: object
       description: error response per RFC 7807
