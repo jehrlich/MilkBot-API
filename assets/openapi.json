@@ -8,7 +8,7 @@
       "name": "Jim Ehrlich, DVM",
       "email": "jehrlich@MilkBot.com"
     },
-    "version": "2.0.0"
+    "version": "2.0.1"
   },
   "servers": [
     {
@@ -331,7 +331,7 @@
           },
           "milkUnit": {
             "type": "string",
-            "description": "abbreviated name of  measurement unit for mile quantity lb=pounds, kg=kilograms",
+            "description": "case-sensitive abbreviated name of  measurement unit for milk quantity lb=pounds, kg=kilograms",
             "default": "kg",
             "example": "kg",
             "enum": [
@@ -341,8 +341,64 @@
           }
         }
       },
+      "FitIteration": {
+        "description": "a single step in the fitting ptocess",
+        "type": "object",
+        "required": [
+          "params",
+          "distance",
+          "method"
+        ],
+        "properties": {
+          "params": {
+            "description": "PArameter valuses at that step of the fitting process.",
+            "$ref": "#/components/schemas/Params"
+          },
+          "distance": {
+            "type": "number",
+            "description": "Distance from objective in arbitrary units. Fitter attempts to minimize distance."
+          },
+          "method": {
+            "type": "string",
+            "description": "Name of fittimng method."
+          }
+        }
+      },
+      "FitSummary": {
+        "description": "Summary of a set of Fits",
+        "type": "object",
+        "required": [
+          "summary",
+          "fits",
+          "errors",
+          "fitTime",
+          "date"
+        ],
+        "properties": {
+          "summary": {
+            "description": "Mean and sd of fitted parameter values for lactations in the set.",
+            "$ref": "#/components/schemas/Priors"
+          },
+          "fits": {
+            "type": "number",
+            "description": "Number of lactations in set fitted successfully."
+          },
+          "errors": {
+            "type": "number",
+            "description": "Number of lactations in set that generated fitting errors."
+          },
+          "fitTime": {
+            "type": "number",
+            "description": "Server time to fit (ms)."
+          },
+          "date": {
+            "type": "string",
+            "description": "Date and time fitted."
+          }
+        }
+      },
       "PriorsTree": {
-        "description": "Recursive tree structure with a Polymorphic nodes (leaf or branch) ",
+        "description": "Recursive tree structure with a Polymorphic nodes (leaf or branch)",
         "type": "object",
         "required": [
           "node"
@@ -398,7 +454,7 @@
           },
           "milkUnit": {
             "type": "string",
-            "description": "abbreviated name of  measurement unit for mile quantity lb=pounds, kg=kilograms",
+            "description": "case-sensitive abbreviated name of  measurement unit for milk quantity lb=pounds, kg=kilograms",
             "default": "kg",
             "example": "kg",
             "enum": [
@@ -698,27 +754,33 @@
             "default": false,
             "example": false
           },
+          "returnSummary": {
+            "description": "return a summarry of fitting results",
+            "type": "boolean",
+            "default": true,
+            "example": true
+          },
           "fitEngine": {
             "description": "name of fitting engine to use",
             "type": "string",
             "enum": [
-              "AnnealingFitter@2.0"
+              "Step1DFitterv2.0"
             ],
-            "default": "AnnealingFitter@2.0"
+            "default": "Step1DFitterv2.0"
           },
           "fitObjective": {
             "description": "name of the fitting objective to use",
             "type": "string",
             "enum": [
-              "MB2@1.0",
-              "MB1@2.0"
+              "MB2v2.0",
+              "MB1v2.0"
             ],
-            "default": "MB2@1.0",
-            "example": "MB2@1.0"
+            "default": "MB2v2.0",
+            "example": "MB2v2.0"
           },
           "preferredMilkUnit": {
             "type": "string",
-            "description": "abbreviated name of preferred measurement unit for mile quantity lb=pounds, kg=kilograms",
+            "description": "case-sensitive abbreviated name of preferred measurement unit for milk quantity lb=pounds, kg=kilograms",
             "default": "kg",
             "example": "kg",
             "enum": [
@@ -763,10 +825,10 @@
           "seMilk": {
             "type": "number"
           },
-          "path": {
+          "fittingPath": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Params"
+              "$ref": "#/components/schemas/FitIteration"
             }
           },
           "discriminatorPath": {
