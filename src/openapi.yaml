@@ -36,14 +36,14 @@ info:
   contact:
     name: Jim Ehrlich, DVM
     email: jehrlich@MilkBot.com
-  version: 2.0.0
+  version: 2.0.1
 servers:
   - description: USA
     url: https://milkbot.com
   - description: Europe
     url: https://europe-west1-numeric-analogy-337601.cloudfunctions.net/milkBot-fitter
 security:
-  - ApiKeyAuth: []  
+  - ApiKeyAuth: []
 paths:
   /fitLactation:
     post:
@@ -71,10 +71,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Fit"
-        '401':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Unauthorized'
+        "401":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Unauthorized"
   /fitLactations:
     post:
       operationId: fit_lactations
@@ -100,14 +100,14 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/FittingResult"
-        '401':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Unauthorized'     
+        "401":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Unauthorized"
   /version:
     get:
       operationId: get_version
-      summary: version number of server 
+      summary: version number of server
       description: >-
         Get the current version number of the server
       responses:
@@ -117,14 +117,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Version"
-        '401':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Unauthorized'
+        "401":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Unauthorized"
   /priorstree:
     get:
       operationId: get_priors
-      summary: Get default tree of prior expectations 
+      summary: Get default tree of prior expectations
       description: >-
         Get the default Priors that will be used if an alternative is not supplied by the user
       responses:
@@ -134,10 +134,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Params"
-        '401':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Unauthorized'
+        "401":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Unauthorized"
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -152,13 +152,13 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
     NotFound:
       description: The server can not find the requested resource.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
   schemas:
     Version:
       type: string
@@ -223,8 +223,8 @@ components:
           items:
             $ref: "#/components/schemas/MilkPt"
         milkUnit:
-         type: string
-         enum: [kg, lb]
+          type: string
+          enum: [kg, lb]
     Params:
       description: Parameter set for the MilkBot model
       required:
@@ -265,13 +265,47 @@ components:
         milkUnit:
           type: string
           description: >-
-            abbreviated name of  measurement unit for mile quantity lb=pounds, kg=kilograms
+            case-sensitive abbreviated name of  measurement unit for milk quantity lb=pounds, kg=kilograms
           default: kg
           example: kg
           enum: [lb, kg]
+    FitIteration:
+      description: a single step in the fitting ptocess
+      type: object
+      required: [params, distance, method]
+      properties:
+        params:
+          description: PArameter valuses at that step of the fitting process.
+          $ref: "#/components/schemas/Params"
+        distance:
+          type: number
+          description: Distance from objective in arbitrary units. Fitter attempts to minimize distance. 
+        method:
+          type: string
+          description: Name of fittimng method.
+    FitSummary:
+      description: Summary of a set of Fits
+      type: object
+      required: [summary, fits, errors, fitTime, date]
+      properties:
+        summary:
+          description: Mean and sd of fitted parameter values for lactations in the set.
+          $ref: "#/components/schemas/Priors"
+        fits:
+          type: number
+          description: Number of lactations in set fitted successfully. 
+        errors:
+          type: number
+          description: Number of lactations in set that generated fitting errors. 
+        fitTime:
+          type: number
+          description: Server time to fit (ms). 
+        date:
+          type: string
+          description: Date and time fitted.
     PriorsTree:
       description: >-
-        Recursive tree structure with a Polymorphic nodes (leaf or branch) 
+        Recursive tree structure with a Polymorphic nodes (leaf or branch)
       type: object
       required: [node]
       properties:
@@ -303,7 +337,7 @@ components:
           $ref: "#/components/schemas/ND"
         offset:
           description: expected distribution of offset parameter in days
-          $ref: "#/components/schemas/ND"          
+          $ref: "#/components/schemas/ND"
         seMilk:
           description: expected standard deviation of milkweight residuals in units specified by milkUnit
           type: number
@@ -312,10 +346,10 @@ components:
         milkUnit:
           type: string
           description: >-
-            abbreviated name of  measurement unit for mile quantity lb=pounds, kg=kilograms
+            case-sensitive abbreviated name of  measurement unit for milk quantity lb=pounds, kg=kilograms
           default: kg
           example: kg
-          enum: [lb, kg]    
+          enum: [lb, kg]
     PriorsLeaf:
       description: >-
         A terminal leaf of a PriorsTree with Priors for fitting a particular class of lactations.
@@ -393,7 +427,7 @@ components:
             - $ref: "#/components/schemas/EqualOrGreater"
             - $ref: "#/components/schemas/EqualOrLess"
           discriminator:
-            propertyName: _type         
+            propertyName: _type
     NumberMatch:
       description: >-
         matches lactations with  a number equal to the value of the NumberMatch.
@@ -454,9 +488,9 @@ components:
         lactationSet:
           $ref: "#/components/schemas/LactationSet"
         priorsTree:
-           $ref: "#/components/schemas/PriorsTree"
+          $ref: "#/components/schemas/PriorsTree"
         options:
-           $ref: "#/components/schemas/FitOptions"
+          $ref: "#/components/schemas/FitOptions"
     FittingResult:
       description: the result of fitting a FittingJob, structured according to the FitOption.
       required: [fits, errors]
@@ -504,28 +538,31 @@ components:
           type: boolean
           default: false
           example: false
+        returnSummary:
+          description: return a summarry of fitting results
+          type: boolean
+          default: true
+          example: true
         fitEngine:
           description: name of fitting engine to use
           type: string
-          enum: [AnnealingFitter@2.0]
-          default: AnnealingFitter@2.0
+          enum: [Step1DFitterv2.0]
+          default: Step1DFitterv2.0
         fitObjective:
           description: name of the fitting objective to use
           type: string
           enum:
-            - MB2@1.0
-            - MB1@2.0
-          default: MB2@1.0
-          example: MB2@1.0
+            - MB2v2.0
+            - MB1v2.0
+          default: MB2v2.0
+          example: MB2v2.0
         preferredMilkUnit:
           type: string
           description: >-
-            abbreviated name of preferred measurement unit for mile quantity lb=pounds, kg=kilograms
+            case-sensitive abbreviated name of preferred measurement unit for milk quantity lb=pounds, kg=kilograms
           default: kg
           example: kg
-          enum:
-            - lb
-            - kg
+          enum: [lb, kg]
     Fit:
       type: object
       required: [lacKey, fittedParams, nPoints, distance, seMilk, priors]
@@ -544,13 +581,13 @@ components:
           type: integer
         distance:
           type: number
-          description:  A measure of fit quality, lower distance indicates a better fit
+          description: A measure of fit quality, lower distance indicates a better fit
         seMilk:
           type: number
-        path:
+        fittingPath:
           type: array
           items:
-            $ref: "#/components/schemas/Params"
+            $ref: "#/components/schemas/FitIteration"
         discriminatorPath:
           type: string
     Error:
