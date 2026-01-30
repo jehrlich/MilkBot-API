@@ -122,8 +122,9 @@
     "/version": {
       "get": {
         "operationId": "get_version",
-        "summary": "version number of server",
-        "description": "Get the current version number of the server",
+        "summary": "version information for software running on server",
+        "description": "Current verson information",
+        "security": [],
         "responses": {
           "200": {
             "description": "ok",
@@ -149,6 +150,7 @@
         "operationId": "get_priors",
         "summary": "Get default tree of prior expectations",
         "description": "Get the default Priors that will be used if an alternative is not supplied by the user",
+        "security": [],
         "responses": {
           "200": {
             "description": "Lactation fitted",
@@ -205,8 +207,40 @@
     },
     "schemas": {
       "Version": {
-        "type": "string",
-        "description": "version number of server"
+        "properties": {
+          "serverVersion": {
+            "type": "string",
+            "description": "version number of server"
+          },
+          "apiVersion": {
+            "type": "string",
+            "description": "version number of API"
+          },
+          "admin": {
+            "type": "string",
+            "description": "contact email for administrator"
+          },
+          "accepteMilkUnits": {
+            "type": "string",
+            "description": "Milk quantity units accepted"
+          },
+          "defaultPriorsTree": {
+            "type": "string",
+            "description": "default PriorsTree"
+          },
+          "defaultFitter": {
+            "type": "string",
+            "description": "default fitting engine name"
+          },
+          "availableFitters": {
+            "type": "string",
+            "description": "Fitting objective object names that are available"
+          },
+          "message": {
+            "type": "string",
+            "description": "any message from the system"
+          }
+        }
       },
       "MilkPt": {
         "description": "Measured milk production data point.",
@@ -245,7 +279,7 @@
             "example": 33.4
           },
           "sd": {
-            "description": "standard deviation of the distribution",
+            "description": "standard deviation of the distribution. Note that sd <=0 is meaningless, and will be interp[reted as a wish to disable the parameter in question. For example setting offset.sd to zero will disable fitting of the offset parameter.",
             "type": "number",
             "format": "float",
             "example": 21.2
